@@ -1252,7 +1252,7 @@ class CloudController(object):
         zone = kwargs.get('placement', {}).get('availability_zone')
         if zone:
             if FLAGS.cells.enable:
-                scheduler_hints = { 'use_cell': zone }
+                scheduler_hints = { 'cell': zone }
             else:
                 availability_zone = zone
 
