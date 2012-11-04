@@ -137,8 +137,8 @@ class CellsScheduler(base.Base):
         # HACK(brian.lamar): We don't work with multiple instances being
         #                    created at the same time, this hack makes
         #                    sure the UUID is where we expect it to be
-        instance_uuid = request_spec['instance_uuids'][0]
-        request_spec['instance_properties']['uuid'] = instance_uuid
+        #instance_uuid = request_spec['instance_uuids'][0]
+        #request_spec['instance_properties']['uuid'] = instance_uuid
 
         fw_properties = copy.copy(kwargs.get('filter_properties', {}))
         fw_properties.update({'context': context,
@@ -147,7 +147,7 @@ class CellsScheduler(base.Base):
                               'request_spec': request_spec})
 
         LOG.debug(_("Scheduling with routing_path=%(routing_path)s"),
-                locals(), instance_uuid=instance_uuid)
+                locals())
 
         fwd_msg = {'method': 'schedule_run_instance',
                    'args': kwargs}
@@ -171,8 +171,7 @@ class CellsScheduler(base.Base):
 
         weighted_cells = weights.get_weighted_cells(self.weighter_classes,
                 cells, fw_properties)
-        LOG.debug(_("Weighted cells: %(weighted_cells)s"), locals(),
-                instance_uuid=instance_uuid)
+        LOG.debug(_("Weighted cells: %(weighted_cells)s"), locals())
 
         # Keep trying until one works
         for weighted_cell in weighted_cells:
@@ -182,7 +181,9 @@ class CellsScheduler(base.Base):
                     # Need to create instance DB entry as scheduler
                     # thinks it's already created... At least how things
                     # currently work.
-                    self._create_instance_here(context, **kwargs)
+                    for instance_uuid in request_spec['instance_uuids']:
+                        request_spec['instance_properties']['uuid'] = instance_uuid
+                        self._create_instance_here(context, **kwargs)
                     fwd_msg['method'] = 'run_instance'
 
                     self._cast_to_scheduler(context, fwd_msg)
@@ -233,17 +234,17 @@ class CellsScheduler(base.Base):
                     continue
         except Exception:
             instance = kwargs['request_spec']['instance_properties']
-            instance_uuid = instance['uuid']
-            LOG.exception(_("Error scheduling"),
-                    instance_uuid=instance_uuid)
+            LOG.exception(_("Error scheduling"))
             if self.manager._get_parent_cells():
-                self.cells_rpcapi.instance_update(context,
-                        {'uuid': instance_uuid,
-                         'vm_state': vm_states.ERROR})
+                for instance_uuid in request_spec['instance_uuids']:
+                    self.cells_rpcapi.instance_update(context,
+                                        {'uuid': instance_uuid,
+                                         'vm_state': vm_states.ERROR})
             else:
-                self.db.instance_update(context,
-                        instance_uuid,
-                        {'vm_state': vm_states.ERROR})
+                for instance_uuid in request_spec['instance_uuids']:
+                    self.db.instance_update(context,
+                                        instance_uuid,
+                                        {'vm_state': vm_states.ERROR})
 
     @cells_utils.update_routing_path
     def schedule_run_instance(self, context, routing_path, **kwargs):
