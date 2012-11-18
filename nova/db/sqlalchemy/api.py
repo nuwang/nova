@@ -1512,7 +1512,7 @@ def instance_create(context, values):
         instance_ref.save(session=session)
 
     # create the instance uuid to ec2_id mapping entry for instance
-    ec2_instance_create(context, instance_ref['uuid'])
+    db.ec2_instance_create(context, instance_ref['uuid'])
 
     return instance_ref
 
@@ -4859,15 +4859,10 @@ def action_event_get_by_id(context, action_id, event_id):
 
 @require_context
 def ec2_instance_create(context, instance_uuid, id=None):
-    """Create ec2 compatible instance by provided uuid."""
-    ec2_instance_ref = models.InstanceIdMapping()
-    ec2_instance_ref.update({'uuid': instance_uuid})
-    if id is not None:
-        ec2_instance_ref.update({'id': id})
-
-    ec2_instance_ref.save()
-
-    return ec2_instance_ref
+    """Create ec2 compatable instance by provided uuid"""
+    return _id_mapping_model_create_or_update(context,
+                                              models.InstanceIdMapping,
+                                              instance_uuid, id=id)
 
 
 @require_context

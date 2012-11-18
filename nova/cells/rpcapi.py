@@ -328,3 +328,12 @@ class CellsAPI(rpc_proxy.RpcProxy):
                                       instance_uuid=instance_uuid,
                                       group_id=security_group_id),
                   version='1.6.1')
+
+    def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
+        """Broadcast EC2 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('ec2_instance_create',
+                                      instance_uuid=instance_uuid,
+                                      ec2_id=ec2_id),
+                  version='1.6.1')

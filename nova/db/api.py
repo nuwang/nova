@@ -1715,10 +1715,17 @@ def get_instance_uuid_by_ec2_id(context, ec2_id):
     return IMPL.get_instance_uuid_by_ec2_id(context, ec2_id)
 
 
-def ec2_instance_create(context, instance_uuid, id=None):
+def ec2_instance_create(context, instance_uuid, id=None, update_cells=True):
     """Create the ec2 id to instance uuid mapping on demand."""
-    return IMPL.ec2_instance_create(context, instance_uuid, id)
-
+    rv = IMPL.ec2_instance_create(context, instance_uuid, id)
+    if update_cells:
+        try:
+            cells_rpcapi.CellsAPI().ec2_instance_create(context,
+                                                        instance_uuid,
+                                                        rv.id)
+        except Exception:
+            LOG.exception(_("Failed to notify cells of e2c_instance_create."))
+    return rv
 
 ####################
 
