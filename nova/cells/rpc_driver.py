@@ -141,8 +141,15 @@ class InterCellRPCAPI(rpcclient.RpcProxy):
         """Turn the DB information for a cell into the parameters
         needed for the RPC call.
         """
-        server_params = parse_transport_url(next_hop.db_info['transport_url'])
-
+        server_params = None
+        transport_urls = next_hop.db_info['transport_url']
+        for url in transport_urls.split(','):
+            params = parse_transport_url(url)
+            hostname = params.pop('hostname')
+            if server_params is None:
+                server_params = params
+                server_params['hosts'] = []
+            server_params['hosts'].append(hostname)
         return dict((k, v) for k, v in server_params.items() if v)
 
     def send_message_to_cell(self, cell_state, message):
