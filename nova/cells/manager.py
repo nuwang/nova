@@ -65,7 +65,7 @@ class CellsManager(manager.Manager):
 
     Scheduling requests get passed to the scheduler class.
     """
-    RPC_API_VERSION = '1.24'
+    RPC_API_VERSION = '1.24.1'
 
     def __init__(self, *args, **kwargs):
         # Mostly for tests.
@@ -527,3 +527,54 @@ class CellsManager(manager.Manager):
         """Backup an instance in its cell."""
         self.msg_runner.backup_instance(ctxt, instance, image_id,
                                         backup_type, rotation)
+
+    def _response_to_aggregate(self, response):
+        aggregate = response.value_or_raise()
+        return aggregate
+
+    def create_aggregate(self, ctxt, cell_name,
+                         aggregate_name, availability_zone):
+        response = self.msg_runner.create_aggregate(ctxt, cell_name,
+                                                    aggregate_name,
+                                                    availability_zone)
+        return self._response_to_aggregate(response)
+
+    def get_aggregate(self, ctxt, cell_name, aggregate_id):
+        response = self.msg_runner.get_aggregate(ctxt, cell_name, aggregate_id)
+        return self._response_to_aggregate(response)
+
+    def get_aggregate_list(self, ctxt, cell_name=None):
+        responses = self.msg_runner.get_aggregate_list(
+            ctxt, cell_name=cell_name)
+        result = []
+        for response in responses:
+            aggregates = response.value_or_raise()
+            for aggregate in aggregates:
+                result.append(aggregate)
+        return result
+
+    def update_aggregate(self, ctxt, cell_name, aggregate_id, values):
+        response = self.msg_runner.update_aggregate(
+            ctxt, cell_name, aggregate_id, values)
+        return self._response_to_aggregate(response)
+
+    def update_aggregate_metadata(self, ctxt, cell_name,
+                                  aggregate_id, metadata):
+        response = self.msg_runner.update_aggregate_metadata(
+            ctxt, cell_name, aggregate_id, metadata)
+        return self._response_to_aggregate(response)
+
+    def delete_aggregate(self, ctxt, cell_name, aggregate_id):
+        response = self.msg_runner.delete_aggregate(
+            ctxt, cell_name, aggregate_id)
+
+    def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
+        response = self.msg_runner.add_host_to_aggregate(
+            ctxt, cell_name, aggregate_id, host_name)
+        return self._response_to_aggregate(response)
+
+    def remove_host_from_aggregate(self, ctxt, cell_name,
+                                   aggregate_id, host_name):
+        response = self.msg_runner.remove_host_from_aggregate(
+            ctxt, cell_name, aggregate_id, host_name)
+        return response.value_or_raise()

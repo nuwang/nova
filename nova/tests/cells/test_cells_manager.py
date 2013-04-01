@@ -798,3 +798,50 @@ class CellsManagerClassTestCase(test.NoDBTestCase):
                                            image_id='fake-id',
                                            backup_type='backup-type',
                                            rotation='rotation')
+
+    def _test_aggregate_method(self, method_name, *args, **kwargs):
+        self.mox.StubOutWithMock(
+            self.cells_manager.msg_runner, method_name)
+        response = self._get_fake_response('fake_response')
+        to_be_called = getattr(self.cells_manager.msg_runner, method_name)
+        to_be_called(*args, **kwargs).AndReturn(response)
+        self.mox.ReplayAll()
+        method = getattr(self.cells_manager, method_name)
+        response = method(*args, **kwargs)
+        self.assertEqual('fake_response', response)
+
+    def test_create_aggregate(self):
+        self._test_aggregate_method('create_aggregate', 'context',
+                                    'fake_cell', 'spares', None)
+
+    def test_get_aggregate(self):
+        self._test_aggregate_method('get_aggregate', 'context',
+                                    'fake_cell', 42)
+
+    def test_get_aggregate_list(self):
+        self._test_aggregate_method('get_aggregate_list', 'context',
+                                    cell_name='fake_cell')
+
+    def test_get_aggregate_list_no_cell(self):
+        self._test_aggregate_method('get_aggregate_list', 'context',
+                                    cell_name=None)
+
+    def test_update_aggregate(self):
+        self._test_aggregate_method('update_aggregate', 'context',
+                                    'fake_cell', 42, {'name': 'new_name'})
+
+    def test_update_aggregate_metadata(self):
+        self._test_aggregate_method('update_aggregate_metadata', 'context',
+                                    'fake_cell', 42, {'is_spare': True})
+
+    def test_delete_aggregate(self):
+        self._test_aggregate_method('delete_aggregate', 'context',
+                                    'fake_cell', 42)
+
+    def test_add_host_to_aggregate(self):
+        self._test_aggregate_method('add_host_to_aggregate', 'context',
+                                    'fake_cell', 42, 'fake_host')
+
+    def test_remove_host_from_aggregate(self):
+        self._test_aggregate_method('remove_host_from_aggregate', 'context',
+                                    'fake_cell', 42, 'fake_host')
