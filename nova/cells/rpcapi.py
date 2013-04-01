@@ -81,6 +81,10 @@ class CellsAPI(rpcclient.RpcProxy):
         1.22 - Adds reset_network()
         1.23 - Adds inject_network_info()
         1.24 - Adds backup_instance() and snapshot_instance()
+        1.24.1 - Adds create_aggregate(), get_aggregate(), get_aggregate_list(),
+                 update_aggregate(), update_aggregate_metadata(),
+                 delete_aggregate(), add_host_to_aggregate(),
+                 and remove_host_from_aggregate()
     '''
     BASE_RPC_API_VERSION = '1.0'
 
