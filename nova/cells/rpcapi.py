@@ -51,6 +51,10 @@ class CellsAPI(rpc_proxy.RpcProxy):
         1.5 - Adds actions_get(), action_get_by_request_id(), and
               action_events_get()
         1.6 - Adds consoleauth_delete_tokens() and validate_console_port()
+        1.6.1 - Adds create_aggregate(), get_aggregate(), get_aggregate_list(),
+              update_aggregate(), update_aggregate_metadata(),
+              delete_aggregate(), add_host_to_aggregate(),
+              and remove_host_from_aggregate()
     '''
     BASE_RPC_API_VERSION = '1.0'
 
@@ -264,3 +268,63 @@ class CellsAPI(rpc_proxy.RpcProxy):
                               console_port=console_port,
                               console_type=console_type),
                 version='1.6')
+
+    def create_aggregate(self, ctxt, cell_name,
+                         aggregate_name, availability_zone):
+        return self.call(ctxt,
+                self.make_msg('create_aggregate',
+                              cell_name=cell_name,
+                              aggregate_name=aggregate_name,
+                              availability_zone=availability_zone),
+                version='1.6.1')
+
+    def get_aggregate(self, ctxt, cell_name, aggregate_id):
+        return self.call(ctxt,
+                self.make_msg('get_aggregate',
+                              cell_name=cell_name,
+                              aggregate_id=aggregate_id),
+                version='1.6.1')
+
+    def get_aggregate_list(self, ctxt, cell_name=None):
+        return self.call(ctxt,
+                self.make_msg('get_aggregate_list', cell_name=cell_name),
+                version='1.6.1')
+
+    def update_aggregate(self, ctxt, cell_name, aggregate_id, values):
+        return self.call(ctxt,
+                self.make_msg('update_aggregate', cell_name=cell_name,
+                              aggregate_id=aggregate_id,
+                              values=values),
+                version='1.6.1')
+
+    def update_aggregate_metadata(self, ctxt, cell_name,
+                                  aggregate_id, metadata):
+        return self.call(ctxt,
+                self.make_msg('update_aggregate_metadata',
+                              cell_name=cell_name,
+                              aggregate_id=aggregate_id,
+                              metadata=metadata),
+                version='1.6.1')
+
+    def delete_aggregate(self, ctxt, cell_name, aggregate_id):
+        self.cast(ctxt,
+                  self.make_msg('delete_aggregate',
+                                cell_name=cell_name,
+                                aggregate_id=aggregate_id),
+                  version='1.6.1')
+
+    def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
+        return self.call(ctxt,
+                self.make_msg('add_host_to_aggregate',
+                              cell_name=cell_name,
+                              aggregate_id=aggregate_id, host_name=host_name),
+                version='1.6.1')
+
+    def remove_host_from_aggregate(self, ctxt, cell_name,
+                                  aggregate_id, host_name):
+        return self.call(ctxt,
+                self.make_msg('remove_host_from_aggregate',
+                              cell_name=cell_name,
+                              aggregate_id=aggregate_id,
+                              host_name=host_name),
+                version='1.6.1')
