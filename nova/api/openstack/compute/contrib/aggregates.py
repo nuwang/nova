@@ -20,7 +20,7 @@ import datetime
 from webob import exc
 
 from nova.api.openstack import extensions
-from nova.compute import api as compute_api
+from nova import compute
 from nova import exception
 from nova.openstack.common.gettextutils import _
 from nova.openstack.common import log as logging
@@ -48,7 +48,7 @@ def get_host_from_body(fn):
 class AggregateController(object):
     """The Host Aggregates API controller for the OpenStack API."""
     def __init__(self):
-        self.api = compute_api.AggregateAPI()
+        self.api = compute.AggregateAPI()
 
     def index(self, req):
         """Returns a list a host aggregate's id, name, availability_zone."""
