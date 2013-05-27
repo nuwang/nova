@@ -794,6 +794,13 @@ class _TargetedMessageMethods(_BaseMessageMethods):
             message.ctxt, aggregate_id, host_name)
         return jsonutils.to_primitive(response)
 
+    def authorize_console(self, message, token, console_type,
+                          host, port, internal_access_path,
+                          instance_uuid):
+        self.consoleauth_rpcapi.authorize_console(message.ctxt,
+                            token, console_type, host,
+                            port, internal_access_path, instance_uuid)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1322,6 +1329,20 @@ class MessageRunner(object):
         method_kwargs = dict(aggregate_name=aggregate_name,
                              availability_zone=availability_zone)
         message = _TargetedMessage(self, ctxt, 'create_aggregate',
+                                   method_kwargs, 'down',
+                                   cell_name, need_response=True)
+        return message.process()
+
+    def authorize_console(self, ctxt, cell_name,
+                          token, console_type, host, port,
+                          internal_access_path, instance_uuid):
+        method_kwargs = {'token': token,
+                         'console_type': console_type,
+                         'host': host,
+                         'port': port,
+                         'internal_access_path': internal_access_path,
+                         'instance_uuid': instance_uuid}
+        message = _TargetedMessage(self, ctxt, 'authorize_console',
                                    method_kwargs, 'down',
                                    cell_name, need_response=True)
         return message.process()
