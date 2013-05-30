@@ -16,6 +16,7 @@
 
 from oslo.config import cfg
 import webob.exc
+import datetime
 
 from nova.api.openstack import extensions
 from nova.api.openstack import wsgi
@@ -82,8 +83,12 @@ class ServiceController(object):
     def _get_services(self, req):
         context = req.environ['nova.context']
         authorize(context)
+        now = timeutils.utcnow()
+        set_zones = True
+        if CONF.cells.enable:
+            set_zones = False
         services = self.host_api.service_get_all(
-            context, set_zones=True)
+            context, set_zones=set_zones)
 
         host = ''
         if 'host' in req.GET:

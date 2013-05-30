@@ -675,3 +675,9 @@ class CellsManager(manager.Manager):
     @periodic_task.periodic_task
     def _heal_volume_id_mappings(self, ctxt):
         self._heal_resource(ctxt, 'volume id mappings')
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+
+        response = self.msg_runner.get_host_availability_zone(ctxt,
+                cell_name, host)
+        return response.value_or_raise()

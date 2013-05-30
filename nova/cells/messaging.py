@@ -50,7 +50,7 @@ from nova.openstack.common.rpc import common as rpc_common
 from nova.openstack.common import timeutils
 from nova.openstack.common import uuidutils
 from nova import utils
-
+from nova import availability_zones
 
 cell_messaging_opts = [
     cfg.IntOpt('max_hop_count',
@@ -995,6 +995,9 @@ class _TargetedMessageMethods(_BaseMessageMethods):
                             token, console_type, host,
                             port, internal_access_path, instance_uuid)
 
+    def get_host_availability_zone(self, message, host):
+        return availability_zones.get_host_availability_zone(message.ctxt, host)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1142,6 +1145,7 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
             filters = {}
         disabled = filters.pop('disabled', None)
         services = self.db.service_get_all(message.ctxt, disabled=disabled)
+        services = availability_zones.set_availability_zones(message.ctxt, services)
         ret_services = []
         for service in services:
             service = jsonutils.to_primitive(service)
@@ -2224,6 +2228,12 @@ class MessageRunner(object):
                                     method_kwargs,
                                     'down', run_locally=False)
         message.process()
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+        message = _TargetedMessage(self, ctxt, 'get_host_availability_zone',
+                                   dict(host=host),
+                                   'down', cell_name, need_response=True)
+        return message.process()
 
     @staticmethod
     def get_message_types():

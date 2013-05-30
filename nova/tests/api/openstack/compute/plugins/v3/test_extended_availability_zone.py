@@ -65,11 +65,11 @@ def fake_compute_get_all(*args, **kwargs):
                                             db_list, fields)
 
 
-def fake_get_host_availability_zone(context, host):
+def fake_get_host_availability_zone(context, host, cell=None):
     return host
 
 
-def fake_get_no_host_availability_zone(context, host):
+def fake_get_no_host_availability_zone(context, host, cell=None):
     return None
 
 
