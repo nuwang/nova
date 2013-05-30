@@ -2942,14 +2942,9 @@ def _ec2_snapshot_get_query(context, session=None):
 @require_context
 def ec2_volume_create(context, volume_uuid, id=None):
     """Create ec2 compatible volume by provided uuid."""
-    ec2_volume_ref = models.VolumeIdMapping()
-    ec2_volume_ref.update({'uuid': volume_uuid})
-    if id is not None:
-        ec2_volume_ref.update({'id': id})
-
-    ec2_volume_ref.save()
-
-    return ec2_volume_ref
+    return _id_mapping_model_create_or_update(context,
+                                              models.VolumeIdMapping,
+                                              volume_uuid, id=id)
 
 
 @require_context

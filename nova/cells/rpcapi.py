@@ -346,3 +346,12 @@ class CellsAPI(rpc_proxy.RpcProxy):
                                       image_uuid=image_uuid,
                                       s3_id=s3_id),
                   version='1.6.1')
+
+    def ec2_volume_create(self, ctxt, volume_uuid, ec2_id):
+        """Broadcast EC2 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('ec2_volume_create',
+                                      volume_uuid=volume_uuid,
+                                      ec2_id=ec2_id),
+                  version='1.6.1')

@@ -1027,8 +1027,16 @@ def get_volume_uuid_by_ec2_id(context, ec2_id):
     return IMPL.get_volume_uuid_by_ec2_id(context, ec2_id)
 
 
-def ec2_volume_create(context, volume_id, forced_id=None):
-    return IMPL.ec2_volume_create(context, volume_id, forced_id)
+def ec2_volume_create(context, volume_id, forced_id=None, update_cells=True):
+    rv = IMPL.ec2_volume_create(context, volume_id, forced_id)
+    if update_cells:
+        try:
+            cells_rpcapi.CellsAPI().ec2_volume_create(context,
+                                                      volume_id,
+                                                      rv.id)
+        except Exception:
+            LOG.exception(_("Failed to notify cells of ec2_volume_create."))
+    return rv
 
 
 def get_snapshot_uuid_by_ec2_id(context, ec2_id):
