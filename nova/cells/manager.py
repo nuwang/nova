@@ -85,7 +85,9 @@ class CellsManager(manager.Manager):
             'security groups': consistency.GroupConsistencyHandler(self.db),
             'rules': consistency.RuleConsistencyHandler(self.db),
             'instance associations':
-                consistency.InstanceAssociationConsistencyHandler(self.db)
+                consistency.InstanceAssociationConsistencyHandler(self.db),
+            'instance id mappings':
+                consistency.InstanceIDMappingConsistencyHandler(self.db),
         }
 
     def post_start_hook(self):
@@ -433,3 +435,7 @@ class CellsManager(manager.Manager):
     @manager.periodic_task
     def _heal_instance_associations(self, ctxt):
         self._heal_resource(ctxt, 'instance associations', from_top=False)
+
+    @manager.periodic_task
+    def _heal_instance_id_mappings(self, ctxt):
+        self._heal_resource(ctxt, 'instance id mappings')

@@ -4895,6 +4895,12 @@ def ec2_instance_create(context, instance_uuid, id=None):
                                               instance_uuid, id=id)
 
 
+def ec2_instance_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.InstanceIdMapping,
+                                          filters, sort_key, sort_dir)
+
+
 @require_context
 def get_ec2_instance_id_by_uuid(context, instance_id, session=None):
     result = _ec2_instance_get_query(context,

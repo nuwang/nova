@@ -1743,6 +1743,14 @@ def ec2_instance_create(context, instance_uuid, id=None, update_cells=True):
             LOG.exception(_("Failed to notify cells of e2c_instance_create."))
     return rv
 
+
+def ec2_instance_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return IMPL.ec2_instance_get_all_by_filters(context, filters, sort_key,
+                                                sort_dir, limit=None,
+                                                marker=None)
+
+
 ####################
 
 
