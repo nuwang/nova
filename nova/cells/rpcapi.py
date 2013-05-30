@@ -340,3 +340,10 @@ class CellsAPI(rpc_proxy.RpcProxy):
                               internal_access_path=internal_access_path,
                               instance_uuid=instance_uuid),
                 version="1.6.1")
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+
+        return self.call(ctxt,
+                self.make_msg('get_host_availability_zone',
+                              cell_name=cell_name, host=host),
+                version='1.6.1')

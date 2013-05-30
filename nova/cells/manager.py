@@ -422,3 +422,9 @@ class CellsManager(manager.Manager):
         self.msg_runner.authorize_console(ctxt, cell_name,
                                           token, console_type, host, port,
                                           internal_access_path, instance_uuid)
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+
+        response = self.msg_runner.get_host_availability_zone(ctxt,
+                cell_name, host)
+        return response.value_or_raise()

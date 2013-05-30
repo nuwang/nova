@@ -801,6 +801,10 @@ class _TargetedMessageMethods(_BaseMessageMethods):
                             token, console_type, host,
                             port, internal_access_path, instance_uuid)
 
+    def get_host_availability_zone(self, message, host):
+        from nova import availability_zones as az
+        return az.get_host_availability_zone(message.ctxt, host)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1401,6 +1405,12 @@ class MessageRunner(object):
         message = _TargetedMessage(self, ctxt, 'remove_host_from_aggregate',
                 method_kwargs, 'down',
                 cell_name, need_response=True)
+        return message.process()
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+        message = _TargetedMessage(self, ctxt, 'get_host_availability_zone',
+                                   dict(host=host),
+                                   'down', cell_name, need_response=True)
         return message.process()
 
     @staticmethod
