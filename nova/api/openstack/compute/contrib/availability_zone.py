@@ -92,7 +92,7 @@ class AvailabilityZoneController(wsgi.Controller):
     def _describe_availability_zones(self, context, **kwargs):
         ctxt = context.elevated()
         available_zones, not_available_zones = \
-            availability_zones.get_availability_zones(ctxt)
+            availability_zones.get_availability_zones(ctxt, cells_api=CONF.cells.enable)
 
         filtered_available_zones = \
             self._get_filtered_availability_zones(available_zones, True)
@@ -104,7 +104,7 @@ class AvailabilityZoneController(wsgi.Controller):
     def _describe_availability_zones_verbose(self, context, **kwargs):
         ctxt = context.elevated()
         available_zones, not_available_zones = \
-            availability_zones.get_availability_zones(ctxt)
+            availability_zones.get_availability_zones(ctxt, cells_api=CONF.cells.enable)
 
         # Available services
         enabled_services = db.service_get_all(context, False)
@@ -156,7 +156,9 @@ class AvailabilityZoneController(wsgi.Controller):
         """Returns a detailed list of availability zone."""
         context = req.environ['nova.context']
         authorize_detail(context)
-
+        if CONF.cells.enable:
+            #verbose doesn't work for cells
+            return self._describe_availability_zones(context)
         return self._describe_availability_zones_verbose(context)
 
 

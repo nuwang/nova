@@ -40,7 +40,7 @@ def fake_compute_get_all(*args, **kwargs):
     return [inst1, inst2]
 
 
-def fake_get_host_availability_zone(context, host):
+def fake_get_host_availability_zone(context, host, cell=None):
     return host
 
 
