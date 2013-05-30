@@ -17,8 +17,14 @@
 
 from oslo.config import cfg
 
+from nova.cells import rpcapi as cell_rpcapi
 from nova import db
 from nova.openstack.common import log as logging
+from nova.openstack.common import memorycache
+from nova.openstack.common import timeutils
+
+AZ_CACHE_SECONDS = 60 * 60 * 24
+MC = memorycache.get_client()
 
 availability_zone_opts = [
     cfg.StrOpt('internal_service_availability_zone',
@@ -32,6 +38,7 @@ availability_zone_opts = [
     ]
 
 CONF = cfg.CONF
+CONF.import_opt('mute_child_interval', 'nova.cells.opts', group='cells')
 CONF.register_opts(availability_zone_opts)
 
 LOG = logging.getLogger(__name__)
@@ -53,7 +60,12 @@ def set_availability_zones(context, services):
     return services
 
 
-def get_host_availability_zone(context, host, conductor_api=None):
+def get_host_availability_zone(context, host, conductor_api=None, cell=None):
+    if cell and CONF.cells.enable:
+
+        cells_rpcapi = cell_rpcapi.CellsAPI()
+        az = cells_rpcapi.get_host_availability_zone(context, cell, host)
+        return az
     if conductor_api:
         metadata = conductor_api.aggregate_metadata_get_by_host(
             context, host, key='availability_zone')
@@ -66,8 +78,27 @@ def get_host_availability_zone(context, host, conductor_api=None):
         return CONF.default_availability_zone
 
 
-def get_availability_zones(context):
+def get_availability_zones(context, cells_api=False):
     """Return available and unavailable zones."""
+    # Override for cells
+    if cells_api:
+        cells_rpcapi = cell_rpcapi.CellsAPI()
+        cell_info = cells_rpcapi.get_cell_info_for_neighbors(context)
+        global_azs = []
+        mute_azs = []
+        secs = CONF.cells.mute_child_interval
+        for cell in cell_info:
+            last_seen = cell['last_seen']
+            if 'availability_zones' not in cell['capabilities']:
+                continue
+            if last_seen and timeutils.is_older_than(last_seen, secs):
+                mute_azs.extend(cell['capabilities']['availability_zones'])
+            else:
+                global_azs.extend(cell['capabilities']['availability_zones'])
+        available_zones = list(set(global_azs))
+        unavailable_zones = list(set(mute_azs))
+        return (available_zones, unavailable_zones)
+
     enabled_services = db.service_get_all(context, False)
     disabled_services = db.service_get_all(context, True)
     enabled_services = set_availability_zones(context, enabled_services)
@@ -86,3 +117,22 @@ def get_availability_zones(context):
         if zone not in not_available_zones:
             not_available_zones.append(zone)
     return (available_zones, not_available_zones)
+
+
+def get_instance_availability_zone(context, instance):
+    """Return availability zone of specified instance."""
+    host = str(instance.get('host'))
+    if not host:
+        return None
+    cell_name = str(instance.get('cell_name', None))
+
+    if cell_name == 'None':
+        cell_name = None
+
+    cache_key = "azcache-%s-%s" % (cell_name or 'none', host)
+    az = MC.get(cache_key)
+    if not az:
+        elevated = context.elevated()
+        az = get_host_availability_zone(elevated, host, cell=cell_name)
+        MC.set(cache_key, az, AZ_CACHE_SECONDS)
+    return az
