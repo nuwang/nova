@@ -230,3 +230,56 @@ class InstanceAssociationConsistencyHandler(ConsistencyHandler):
             instance_association['instance_uuid'],
             instance_association['security_group_id'],
         )
+
+
+class MappingConsistencyHandler(ConsistencyHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(MappingConsistencyHandler, self).__init__(*args, **kwargs)
+        self.create_function = None
+        self.destroy_function = None
+
+    def _send_create(self, ctxt, entry):
+        fn = getattr(self.cells_rpcapi, self.create_function, None)
+        fn(ctxt, entry['uuid'], entry['id'])
+        LOG.debug(_('Sent broadcast message down to create %(model_name)s '
+                    'with id=%(id)s and uuid=%(uuid)s.') % (
+                        dict(model_name=self.model_name,
+                             id=entry['id'], uuid=entry['uuid'])))
+
+    def _send_destroy(self, ctxt, entry):
+        msg = _('Healing process attempted to delete an %s entry, '
+                'which is not supported.') % self.model_name
+        LOG.error(msg)
+
+
+class InstanceIDMappingConsistencyHandler(MappingConsistencyHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(InstanceIDMappingConsistencyHandler, self).__init__(*args,
+                                                                  **kwargs)
+        self.get_entries_filtered = self.db.ec2_instance_get_all_by_filters
+        self.model_name = 'instance id mapping'
+        self.model_name_plural = 'instance id mappings'
+        self.create_function = 'ec2_instance_create'
+
+
+class S3ImageConsistencyHandler(MappingConsistencyHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(S3ImageConsistencyHandler, self).__init__(*args, **kwargs)
+        self.get_entries_filtered = self.db.s3_image_get_all_by_filters
+        self.model_name = 's3 image'
+        self.model_name_plural = 's3 images'
+        self.create_function = 's3_image_create'
+
+
+class VolumeIDMappingConsistencyHandler(MappingConsistencyHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(VolumeIDMappingConsistencyHandler, self).__init__(*args,
+                                                                **kwargs)
+        self.get_entries_filtered = self.db.ec2_volume_get_all_by_filters
+        self.model_name = 'volume id mapping'
+        self.model_name_plural = 'volume id mappings'
+        self.create_function = 'ec2_volume_create'
