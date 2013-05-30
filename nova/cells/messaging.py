@@ -753,6 +753,10 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         return self.compute_rpcapi.validate_console_port(message.ctxt,
                 instance, console_port, console_type)
 
+    def get_host_availability_zone(self, message, host):
+        from nova import availability_zones as az
+        return az.get_host_availability_zone(message.ctxt, host)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1270,6 +1274,12 @@ class MessageRunner(object):
         message = _TargetedMessage(self, ctxt, 'validate_console_port',
                                    method_kwargs, 'down',
                                    cell_name, need_response=True)
+        return message.process()
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+        message = _TargetedMessage(self, ctxt, 'get_host_availability_zone',
+                                   dict(host=host),
+                                   'down', cell_name, need_response=True)
         return message.process()
 
     @staticmethod
