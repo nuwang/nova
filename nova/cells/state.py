@@ -25,6 +25,7 @@ from oslo.config import cfg
 from nova.cells import rpc_driver
 from nova import context
 from nova.db import base
+from nova.availability_zones import get_availability_zones
 from nova.openstack.common import lockutils
 from nova.openstack.common import log as logging
 from nova.openstack.common import timeutils
@@ -50,7 +51,7 @@ class CellState(object):
     def __init__(self, cell_name, is_me=False):
         self.name = cell_name
         self.is_me = is_me
-        self.last_seen = datetime.datetime.min
+        self.last_seen = timeutils.utcnow()
         self.capabilities = {}
         self.capacities = {}
         self.db_info = {}
@@ -83,6 +84,7 @@ class CellState(object):
         if self.db_info:
             for field in db_fields_to_return:
                 cell_info[field] = self.db_info[field]
+        cell_info['last_seen'] = self.last_seen
         return cell_info
 
     def send_message(self, message):
@@ -127,7 +129,11 @@ class CellStateManager(base.Base):
             else:
                 values = set([value])
             my_cell_capabs[name] = values
-            self.my_cell_state.update_capabilities(my_cell_capabs)
+        ctxt = context.get_admin_context()
+        active, disabled = get_availability_zones(ctxt)
+        # Only send up available AZs
+        my_cell_capabs['availability_zones'] = set(active)
+        self.my_cell_state.update_capabilities(my_cell_capabs)
 
     def _refresh_cells_from_db(self, ctxt):
         """Make our cell info map match the db."""
