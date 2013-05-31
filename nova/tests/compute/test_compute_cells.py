@@ -209,6 +209,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.mox.ReplayAll()
 
     def test_create_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi, 'create_aggregate')
         self.api.cells_rpcapi.create_aggregate(
             'context', 'fake_cell', 'aggregate_name', None).AndReturn(
@@ -219,6 +221,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.assertEqual('fake_result', result)
 
     def test_get_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi, 'get_aggregate')
         self.api.cells_rpcapi.get_aggregate(
             'context', 'fake_cell', 42).AndReturn('fake_result')
@@ -245,6 +249,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.assertEqual(['fake', 'result'], result)
 
     def test_update_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi, 'update_aggregate')
         self.api.cells_rpcapi.update_aggregate(
             'context', 'fake_cell', 42, {'name': 'spares'}).AndReturn(
@@ -255,6 +261,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.assertEqual('fake_result', result)
 
     def test_update_aggregate_metadata(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi,
                                  'update_aggregate_metadata')
         self.api.cells_rpcapi.update_aggregate_metadata(
@@ -266,6 +274,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.assertEqual('fake_result', result)
 
     def test_delete_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi, 'delete_aggregate')
         self.api.cells_rpcapi.delete_aggregate(
             'context', 'fake_cell', 42)
@@ -273,6 +283,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.api.delete_aggregate('context', 'fake_cell@42')
 
     def test_add_host_to_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi,
                                  'add_host_to_aggregate')
         self.api.cells_rpcapi.add_host_to_aggregate(
@@ -283,6 +295,8 @@ class AggregateAPITestCase(test_compute.BaseTestCase):
         self.assertEqual('fake_result', result)
 
     def test_remove_host_from_aggregate(self):
+        # The code doesn't call cell_get, so we pretend it did
+        self.api.db.cell_get('context', 'fake_cell')
         self.mox.StubOutWithMock(self.api.cells_rpcapi,
                                  'remove_host_from_aggregate')
         self.api.cells_rpcapi.remove_host_from_aggregate(
