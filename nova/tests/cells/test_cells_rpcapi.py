@@ -393,7 +393,7 @@ class CellsAPITestCase(test.TestCase):
                          'aggregate_name': 'fake_aggregate',
                          'availability_zone': 'fake_zone'}
         self._check_result(call_info, 'create_aggregate',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def test_get_aggregate(self):
         call_info = self._stub_rpc_method('call', 'fake_response')
@@ -403,7 +403,7 @@ class CellsAPITestCase(test.TestCase):
         expected_args = {'cell_name': 'fake_cell',
                          'aggregate_id': 'fake_id'}
         self._check_result(call_info, 'get_aggregate',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def test_get_aggregate_list(self):
         call_info = self._stub_rpc_method('call', 'fake_response')
@@ -411,7 +411,7 @@ class CellsAPITestCase(test.TestCase):
         self.cells_rpcapi.get_aggregate_list(self.fake_context, None)
         expected_args = {'cell_name': None}
         self._check_result(call_info, 'get_aggregate_list',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def test_update_aggregate(self):
         call_info = self._stub_rpc_method('call', 'fake_response')
@@ -421,7 +421,7 @@ class CellsAPITestCase(test.TestCase):
         expected_args = dict(cell_name='fake_cell', aggregate_id='fake_id',
                              values={'name': 'spares'})
         self._check_result(call_info, 'update_aggregate',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def test_update_aggregate_metadata(self):
         call_info = self._stub_rpc_method('call', 'fake_response')
@@ -431,7 +431,7 @@ class CellsAPITestCase(test.TestCase):
         expected_args = dict(cell_name='fake_cell', aggregate_id='fake_id',
                              metadata={'is_spare': True})
         self._check_result(call_info, 'update_aggregate_metadata',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def test_delete_aggregate(self):
         cast_info = self._stub_rpc_method('cast', None)
@@ -441,14 +441,14 @@ class CellsAPITestCase(test.TestCase):
         expected_args = {'cell_name': 'fake_cell',
                          'aggregate_id': 'fake_id'}
         self._check_result(cast_info, 'delete_aggregate',
-                           expected_args, version='1.8')
+                           expected_args, version='1.6.1')
 
     def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
         return self.call(ctxt,
                 self.make_msg('add_host_to_aggregate',
                               cell_name=cell_name,
                               aggregate_id=aggregate_id, host_name=host_name),
-                version='1.8')
+                version='1.6.1')
 
     def remove_host_from_aggregate(self, ctxt, cell_name,
                                    aggregate_id, host_name):
@@ -457,4 +457,4 @@ class CellsAPITestCase(test.TestCase):
                               cell_name=cell_name,
                               aggregate_id=aggregate_id,
                               host_name=host_name),
-                version='1.8')
+                version='1.6.1')
