@@ -2989,6 +2989,13 @@ def ec2_volume_create(context, volume_uuid, id=None):
 
 
 @require_context
+def ec2_volume_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.VolumeIdMapping,
+                                          filters, sort_key, sort_dir)
+
+
+@require_context
 def get_ec2_volume_id_by_uuid(context, volume_id, session=None):
     result = _ec2_volume_get_query(context, session=session).\
                     filter_by(uuid=volume_id).\

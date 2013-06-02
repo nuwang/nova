@@ -1039,6 +1039,12 @@ def ec2_volume_create(context, volume_id, forced_id=None, update_cells=True):
     return rv
 
 
+def ec2_volume_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return IMPL.ec2_volume_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None)
+
+
 def get_snapshot_uuid_by_ec2_id(context, ec2_id):
     return IMPL.get_snapshot_uuid_by_ec2_id(context, ec2_id)
 
