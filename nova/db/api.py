@@ -1556,6 +1556,12 @@ def s3_image_get(context, image_id):
     return IMPL.s3_image_get(context, image_id)
 
 
+def s3_image_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+    return IMPL.s3_image_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None)
+
+
 def s3_image_get_by_uuid(context, image_uuid):
     """Find local s3 image represented by the provided uuid."""
     return IMPL.s3_image_get_by_uuid(context, image_uuid)

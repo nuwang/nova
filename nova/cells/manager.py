@@ -88,6 +88,8 @@ class CellsManager(manager.Manager):
                 consistency.InstanceAssociationConsistencyHandler(self.db),
             'instance id mappings':
                 consistency.InstanceIDMappingConsistencyHandler(self.db),
+            'image id mappings':
+                consistency.S3ImageConsistencyHandler(self.db),
         }
 
     def post_start_hook(self):
@@ -439,3 +441,7 @@ class CellsManager(manager.Manager):
     @manager.periodic_task
     def _heal_instance_id_mappings(self, ctxt):
         self._heal_resource(ctxt, 'instance id mappings')
+
+    @manager.periodic_task
+    def _heal_s3_images(self, ctxt):
+        self._heal_resource(ctxt, 'image id mappings')

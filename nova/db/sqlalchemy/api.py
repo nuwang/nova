@@ -4460,6 +4460,13 @@ def s3_image_create(context, image_uuid, id=None):
                                               image_uuid, id=id)
 
 
+@require_context
+def s3_image_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.S3Image,
+                                          filters, sort_key, sort_dir)
+
+
 ####################
 
 
