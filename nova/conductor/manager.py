@@ -15,6 +15,7 @@
 """Handles database requests from other nova services."""
 
 from nova.api.ec2 import ec2utils
+from nova.cells import rpcapi as cells_rpcapi
 from nova.compute import api as compute_api
 from nova.compute import utils as compute_utils
 from nova import exception
@@ -58,6 +59,7 @@ class ConductorManager(manager.Manager):
         self._network_api = None
         self._compute_api = None
         self.quotas = quota.QUOTAS
+        self.cells_rpcapi = cells_rpcapi.CellsAPI()
 
     @property
     def network_api(self):
@@ -228,10 +230,15 @@ class ConductorManager(manager.Manager):
                                               create=None):
         if create is None:
             self.db.block_device_mapping_update_or_create(context, values)
+            bdm = values
         elif create is True:
             self.db.block_device_mapping_create(context, values)
+            bdm = values
         else:
-            self.db.block_device_mapping_update(context, values['id'], values)
+            bdm = self.db.block_device_mapping_update(context,
+                                                      values['id'],
+                                                      values)
+        self.cells_rpcapi.bdm_update_or_create(context, bdm, create=create)
 
     def block_device_mapping_get_all_by_instance(self, context, instance):
         bdms = self.db.block_device_mapping_get_all_by_instance(
@@ -244,12 +251,28 @@ class ConductorManager(manager.Manager):
         if bdms is not None:
             for bdm in bdms:
                 self.db.block_device_mapping_destroy(context, bdm['id'])
+                # NOTE(comstud): bdm['id'] will be different in API cell,
+                # so we must try to destroy by device_name or volume_id.
+                if not bdm.get('instance_uuid'):
+                    continue
+                if bdm.get('device_name'):
+                    self.cells_rpcapi.bdm_destroy(
+                            context, bdm['instance_uuid'],
+                            device_name=bdm['device_name'])
+                elif bdm.get('volume_id'):
+                    self.cells_rpcapi.bdm_destroy(
+                            context, bdm['instance_uuid'],
+                            volume_id=bdm['volume_id'])
         elif instance is not None and volume_id is not None:
             self.db.block_device_mapping_destroy_by_instance_and_volume(
                 context, instance['uuid'], volume_id)
+            self.cells_rpcapi.bdm_destroy(
+                context, instance['uuid'], volume_id=volume_id)
         elif instance is not None and device_name is not None:
             self.db.block_device_mapping_destroy_by_instance_and_device(
                 context, instance['uuid'], device_name)
+            self.cells_rpcapi.bdm_destroy(
+                context, instance['uuid'], device_name=device_name)
         else:
             # NOTE(danms): This shouldn't happen
             raise exception.Invalid(_("Invalid block_device_mapping_destroy"
