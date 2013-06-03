@@ -196,6 +196,47 @@ def _id_mapping_model_create_or_update(context, model, uuid, id=None):
     return ref
 
 
+def _id_mapping_get_all_by_filters(context, model, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+
+    sort_fn = {'desc': desc, 'asc': asc}
+    session = get_session()
+    query_prefix = session.query(model).\
+            order_by(sort_fn[sort_dir](getattr(model, sort_key)))
+
+    # Make a copy of the filters dictionary to use going forward, as we'll
+    # be modifying it and we shouldn't affect the caller's use of it.
+    filters = filters.copy()
+
+    if 'changes-since' in filters:
+        changes_since = timeutils.normalize_time(filters['changes-since'])
+        query_prefix = query_prefix.\
+                            filter(model.updated_at > changes_since)
+
+    if 'deleted' in filters:
+        if filters.pop('deleted'):
+            query_prefix = query_prefix.filter(model.deleted == model.id)
+        else:
+            query_prefix = query_prefix.filter_by(deleted=0)
+
+    if not context.is_admin:
+        # If we're not admin context, add appropriate filter..
+        if context.project_id:
+            filters['project_id'] = context.project_id
+        else:
+            filters['user_id'] = context.user_id
+
+    # Filters for exact matches that we can do along with the SQL query...
+    # For other filters that don't match this, we will do regexp matching
+    exact_match_filter_names = ['id', 'uuid']
+
+    # Filter the query
+    query_prefix = exact_filter(query_prefix, model,
+                                filters, exact_match_filter_names)
+    query_prefix = regex_filter(query_prefix, model, filters)
+    return query_prefix.all()
+
+
 def model_query(context, model, *args, **kwargs):
     """Query helper that accounts for context's `read_deleted` field.
 
