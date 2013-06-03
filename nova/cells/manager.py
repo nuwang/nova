@@ -422,3 +422,14 @@ class CellsManager(manager.Manager):
         self.msg_runner.authorize_console(ctxt, cell_name,
                                           token, console_type, host, port,
                                           internal_access_path, instance_uuid)
+
+    def bdm_update_or_create_at_top(self, ctxt, bdm, create=None):
+        """BDM was created/updated in this cell.  Tell the API cells."""
+        self.msg_runner.bdm_update_or_create_at_top(ctxt, bdm, create=create)
+
+    def bdm_destroy_at_top(self, ctxt, instance_uuid, device_name=None,
+                           volume_id=None):
+        """BDM was destroyed for instance in this cell.  Tell the API cells."""
+        self.msg_runner.bdm_destroy_at_top(ctxt, instance_uuid,
+                                           device_name=device_name,
+                                           volume_id=volume_id)
