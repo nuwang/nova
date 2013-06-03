@@ -1931,6 +1931,7 @@ class CloudTestCase(test.TestCase):
 
         def fake_block_device_mapping_get_all_by_instance(context, inst_id):
             return [dict(id=1,
+                         instance_uuid=inst_id,
                          snapshot_id=snapshots[0],
                          volume_id=volumes[0],
                          virtual_name=None,

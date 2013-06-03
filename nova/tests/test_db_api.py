@@ -2335,11 +2335,14 @@ class BlockDeviceMappingTestCase(test.TestCase):
 
     def test_block_device_mapping_update(self):
         bdm = self._create_bdm({})
-        db.block_device_mapping_update(self.ctxt, bdm['id'],
-                                       {'virtual_name': 'some_virt_name'})
+        result = db.block_device_mapping_update(
+                self.ctxt, bdm['id'], {'virtual_name': 'some_virt_name'})
         uuid = bdm['instance_uuid']
         bdm_real = db.block_device_mapping_get_all_by_instance(self.ctxt, uuid)
         self.assertEqual(bdm_real[0]['virtual_name'], 'some_virt_name')
+        # Also make sure the update call returned correct data
+        self.assertEqual(dict(bdm_real[0].iteritems()),
+                         dict(result.iteritems()))
 
     def test_block_device_mapping_update_or_create(self):
         values = {

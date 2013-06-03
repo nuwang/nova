@@ -2940,13 +2940,15 @@ def block_device_mapping_create(context, values):
     bdm_ref = models.BlockDeviceMapping()
     bdm_ref.update(values)
     bdm_ref.save()
+    return bdm_ref
 
 
 @require_context
 def block_device_mapping_update(context, bdm_id, values):
-    _block_device_mapping_get_query(context).\
-            filter_by(id=bdm_id).\
-            update(values)
+
+    query = _block_device_mapping_get_query(context).filter_by(id=bdm_id)
+    query.update(values)
+    return query.first()
 
 
 @require_context
