@@ -1167,6 +1167,9 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
     def ec2_instance_create(self, message, instance_uuid, ec2_id):
         self.db.ec2_instance_create(message.ctxt, instance_uuid, ec2_id)
 
+    def s3_image_create(self, message, image_uuid, s3_id):
+        self.db.s3_image_create(message.ctxt, image_uuid, s3_id)
+
 
 _CELL_MESSAGE_TYPE_TO_MESSAGE_CLS = {'targeted': _TargetedMessage,
                                      'broadcast': _BroadcastMessage,
@@ -1610,6 +1613,13 @@ class MessageRunner(object):
     def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
         method_kwargs = {'instance_uuid': instance_uuid, 'ec2_id': ec2_id}
         message = _BroadcastMessage(self, ctxt, 'ec2_instance_create',
+                                    method_kwargs,
+                                    'down', run_locally=False)
+        message.process()
+
+    def s3_image_create(self, ctxt, image_uuid, s3_id):
+        method_kwargs = {'image_uuid': image_uuid, 's3_id': s3_id}
+        message = _BroadcastMessage(self, ctxt, 's3_image_create',
                                     method_kwargs,
                                     'down', run_locally=False)
         message.process()

@@ -337,3 +337,12 @@ class CellsAPI(rpc_proxy.RpcProxy):
                                       instance_uuid=instance_uuid,
                                       ec2_id=ec2_id),
                   version='1.6.1')
+
+    def s3_image_create(self, ctxt, image_uuid, s3_id):
+        """Broadcast S3 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('s3_image_create',
+                                      image_uuid=image_uuid,
+                                      s3_id=s3_id),
+                  version='1.6.1')

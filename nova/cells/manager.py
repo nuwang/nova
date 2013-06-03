@@ -408,6 +408,9 @@ class CellsManager(manager.Manager):
     def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
         self.msg_runner.ec2_instance_create(ctxt, instance_uuid, ec2_id)
 
+    def s3_image_create(self, ctxt, image_uuid, s3_id):
+        self.msg_runner.s3_image_create(ctxt, image_uuid, s3_id)
+
     def _heal_resource(self, ctxt, resource_name, from_top=True):
         if from_top and self.state_manager.get_parent_cells():
             return

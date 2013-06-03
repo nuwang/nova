@@ -4418,16 +4418,10 @@ def s3_image_get_by_uuid(context, image_uuid):
     return result
 
 
-def s3_image_create(context, image_uuid):
+def s3_image_create(context, image_uuid, id=None):
     """Create local s3 image represented by provided uuid."""
-    try:
-        s3_image_ref = models.S3Image()
-        s3_image_ref.update({'uuid': image_uuid})
-        s3_image_ref.save()
-    except Exception, e:
-        raise db_exc.DBError(e)
-
-    return s3_image_ref
+    return _id_mapping_model_create_or_update(context, models.S3Image,
+                                              image_uuid, id=id)
 
 
 ####################
