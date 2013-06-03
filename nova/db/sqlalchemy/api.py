@@ -160,6 +160,42 @@ def _retry_on_deadlock(f):
     return wrapped
 
 
+def _model_get_query(context, model, session=None):
+    return model_query(context,
+                       model,
+                       session=session,
+                       read_deleted='yes')
+
+
+def _id_mapping_model_create_or_update(context, model, uuid, id=None):
+    """Create or update model id mapping to provided uuid."""
+    session = get_session()
+    if id is not None:
+        rows_deleted = _model_get_query(context, model, session=session).\
+                           filter(and_(model.uuid != uuid, model.id == id)).\
+                           delete()
+        if rows_deleted:
+            LOG.warn("Deleted out of sync %(model)s: ID %(id)s.",
+                     {'id': id, 'model': model.__name__})
+
+    # FIXME(kspear): should probably be setting read_deleted='no' here?
+    ref = _model_get_query(context, model, session=session).\
+              filter_by(uuid=uuid).\
+              first()
+
+    if not ref:
+        ref = model()
+    elif ref['id'] == id:
+        return ref
+
+    ref.update({'uuid': uuid})
+    if id is not None:
+        ref.update({'id': id})
+
+    ref.save(session=session)
+    return ref
+
+
 def model_query(context, model, *args, **kwargs):
     """Query helper that accounts for context's `read_deleted` field.
 
