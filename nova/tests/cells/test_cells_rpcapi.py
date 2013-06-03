@@ -383,3 +383,29 @@ class CellsAPITestCase(test.TestCase):
         self._check_result(call_info, 'validate_console_port',
                 expected_args, version='1.6')
         self.assertEqual(result, 'fake_response')
+
+    def test_bdm_update_or_create(self):
+        fake_bdm = {'id': 2, 'other': 'meow'}
+
+        call_info = self._stub_rpc_method('cast', None)
+
+        self.cells_rpcapi.bdm_update_or_create(self.fake_context, fake_bdm,
+                                               create='fake-create')
+
+        expected_args = {'bdm': fake_bdm, 'create': 'fake-create'}
+        self._check_result(call_info, 'bdm_update_or_create',
+                expected_args, version='1.8')
+
+    def test_bdm_destroy(self):
+        call_info = self._stub_rpc_method('cast', None)
+
+        self.cells_rpcapi.bdm_destroy(self.fake_context,
+                                      'fake-uuid',
+                                      device_name='fake-device',
+                                      volume_id='fake-vol')
+
+        expected_args = {'instance_uuid': 'fake-uuid',
+                         'device_name': 'fake-device',
+                         'volume_id': 'fake-vol'}
+        self._check_result(call_info, 'bdm_destroy',
+                expected_args, version='1.8')
