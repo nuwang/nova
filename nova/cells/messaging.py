@@ -44,7 +44,7 @@ from nova.openstack.common.rpc import common as rpc_common
 from nova.openstack.common import timeutils
 from nova.openstack.common import uuidutils
 from nova import utils
-
+from nova import availability_zones
 
 cell_messaging_opts = [
     cfg.IntOpt('max_hop_count',
@@ -889,6 +889,7 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
             filters = {}
         disabled = filters.pop('disabled', None)
         services = self.db.service_get_all(message.ctxt, disabled=disabled)
+        services = availability_zones.set_availability_zones(message.ctxt, services)
         ret_services = []
         for service in services:
             service = jsonutils.to_primitive(service)

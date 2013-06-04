@@ -44,7 +44,7 @@ class ExtendedAZController(wsgi.Controller):
         az = self.mc.get(cache_key)
         if not az:
             elevated = context.elevated()
-            az = availability_zones.get_host_availability_zone(elevated, host)
+            az = availability_zones.get_instance_availability_zone(elevated, instance)
             self.mc.set(cache_key, az, AZ_CACHE_SECONDS)
         return az
 

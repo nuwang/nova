@@ -16,6 +16,7 @@
 
 from oslo.config import cfg
 import webob.exc
+import datetime
 
 from nova.api.openstack import extensions
 from nova.api.openstack import wsgi
@@ -83,8 +84,11 @@ class ServiceController(object):
         context = req.environ['nova.context']
         authorize(context)
         now = timeutils.utcnow()
+        set_zones = True
+        if CONF.cells.enable:
+            set_zones = False
         services = self.host_api.service_get_all(
-            context, set_zones=True)
+            context, set_zones=set_zones)
 
         host = ''
         if 'host' in req.GET:
@@ -99,7 +103,11 @@ class ServiceController(object):
 
         svcs = []
         for svc in services:
-            delta = now - (svc['updated_at'] or svc['created_at'])
+            last_seen = svc['updated_at'] or svc['created_at']
+            # Sometimes we get a string here, sometimes a datetime
+            if type(last_seen) != datetime.datetime:
+                last_seen = timeutils.parse_strtime(svc['updated_at'] or svc['created_at'])
+            delta = now - last_seen
             alive = abs(utils.total_seconds(delta)) <= CONF.service_down_time
             art = (alive and "up") or "down"
             active = 'enabled'
