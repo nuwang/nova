@@ -578,3 +578,11 @@ class CellsManager(manager.Manager):
         response = self.msg_runner.remove_host_from_aggregate(
             ctxt, cell_name, aggregate_id, host_name)
         return response.value_or_raise()
+
+    def authorize_console(self, ctxt, cell_name,
+                          token, console_type, host, port,
+                          internal_access_path, instance_uuid):
+
+        self.msg_runner.authorize_console(ctxt, cell_name,
+                                          token, console_type, host, port,
+                                          internal_access_path, instance_uuid)
