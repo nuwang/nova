@@ -1345,12 +1345,8 @@ class ComputeManager(manager.SchedulerDependentManager):
                 system_metadata=system_meta)
 
         if CONF.vnc_enabled or CONF.spice.enabled:
-            if CONF.cells.enable:
-                self.cells_rpcapi.consoleauth_delete_tokens(context,
-                        instance['uuid'])
-            else:
-                self.consoleauth_rpcapi.delete_tokens_for_instance(context,
-                        instance['uuid'])
+            self.consoleauth_rpcapi.delete_tokens_for_instance(context,
+                instance['uuid'])
 
     @exception.wrap_exception(notifier=notifier, publisher_id=publisher_id())
     @wrap_instance_event

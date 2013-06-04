@@ -157,6 +157,12 @@ class CellsComputeAPITestCase(test_compute.ComputeAPITestCase):
     def test_snapshot_given_image_uuid(self):
         self.skipTest("Test doesn't apply to API cell.")
 
+    def test_spice_console(self):
+        self.skipTest("Test doesn't apply to API cell.")
+
+    def test_vnc_console(self):
+        self.skipTest("Test doesn't apply to API cell.")
+
     @wrap_create_instance
     def test_snapshot(self):
         return super(CellsComputeAPITestCase, self).test_snapshot()

@@ -264,3 +264,15 @@ class CellsAPI(rpc_proxy.RpcProxy):
                               console_port=console_port,
                               console_type=console_type),
                 version='1.6')
+
+    def authorize_console(self, ctxt, cell_name, token, console_type, host, port,
+                          internal_access_path, instance_uuid=None):
+        # The remote side doesn't return anything, but we want to block
+        # until it completes.
+        return self.call(ctxt,
+                self.make_msg('authorize_console', cell_name=cell_name,
+                              token=token, console_type=console_type,
+                              host=host, port=port,
+                              internal_access_path=internal_access_path,
+                              instance_uuid=instance_uuid),
+                version="1.6.1")
