@@ -523,6 +523,14 @@ class ComputeCellsAPI(compute_api.API):
             raise exception.InvalidDevicePath(path=device)
         try:
             volume = self.volume_api.get(context, volume_id)
+            volume_az = volume['availability_zone']
+            instance_az = availability_zones.get_instance_availability_zone(
+                context, instance)
+            if volume_az != instance_az:
+                msg = "Volume not in same availability zone (%s != %s)" % (
+                    instance_az,
+                    volume_az)
+                raise exception.InvalidVolume(reason=msg)
             self.volume_api.check_attach(context, volume, instance=instance)
         except Exception:
             with excutils.save_and_reraise_exception():
