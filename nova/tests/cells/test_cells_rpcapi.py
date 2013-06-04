@@ -394,7 +394,7 @@ class CellsAPITestCase(test.TestCase):
 
         expected_args = {'bdm': fake_bdm, 'create': 'fake-create'}
         self._check_result(call_info, 'bdm_update_or_create',
-                expected_args, version='1.8')
+                expected_args, version='1.6.1')
 
     def test_bdm_destroy(self):
         call_info = self._stub_rpc_method('cast', None)
@@ -408,4 +408,4 @@ class CellsAPITestCase(test.TestCase):
                          'device_name': 'fake-device',
                          'volume_id': 'fake-vol'}
         self._check_result(call_info, 'bdm_destroy',
-                expected_args, version='1.8')
+                expected_args, version='1.6.1')
