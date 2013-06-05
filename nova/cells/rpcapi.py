@@ -693,20 +693,22 @@ class CellsAPI(rpcclient.RpcProxy):
         cctxt.cast(ctxt, 'security_group_rule_destroy',
                    rule=rule, group=group_p)
 
-    def instance_add_security_group(self, ctxt, instance, security_group_id):
+    def instance_add_security_group(self, ctxt, instance_uuid,
+                                    security_group_id):
         """Broadcast security group instance association add upward"""
         if not CONF.cells.enable:
             return
         cctxt = self.client.prepare(version='1.24.1')
         cctxt.cast(ctxt, 'instance_add_security_group',
-                   instance_uuid=instance['uuid'],
+                   instance_uuid=instance_uuid,
                    group_id=security_group_id)
 
-    def instance_remove_security_group(self, ctxt, instance, security_group_id):
+    def instance_remove_security_group(self, ctxt, instance_uuid,
+                                       security_group_id):
         """Broadcast security group instance association remove upward"""
         if not CONF.cells.enable:
             return
         cctxt = self.client.prepare(version='1.24.1')
         cctxt.cast(ctxt, 'instance_remove_security_group',
-                   instance_uuid=instance['uuid'],
+                   instance_uuid=instance_uuid,
                    group_id=security_group_id)
