@@ -3661,6 +3661,51 @@ def _security_group_get_by_names(context, session, project_id, group_names):
 def security_group_get_all(context):
     return _security_group_get_query(context).all()
 
+@require_context
+def security_group_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+    sort_fn = {'desc': desc, 'asc': asc}
+
+    session = get_session()
+    query_prefix = session.query(models.SecurityGroup).\
+            order_by(sort_fn[sort_dir](getattr(models.SecurityGroup, sort_key)))
+
+    # Make a copy of the filters dictionary to use going forward, as we'll
+    # be modifying it and we shouldn't affect the caller's use of it.
+    filters = filters.copy()
+
+    if 'changes-since' in filters:
+        changes_since = timeutils.normalize_time(filters['changes-since'])
+        query_prefix = query_prefix.\
+                            filter(models.SecurityGroup.updated_at > changes_since)
+
+    if 'deleted' in filters:
+        if filters.pop('deleted'):
+            deleted = models.SecurityGroup.deleted == models.SecurityGroup.id
+            query_prefix = query_prefix.filter(deleted)
+        else:
+            query_prefix = query_prefix.\
+                    filter_by(deleted=0)
+
+    if not context.is_admin:
+        # If we're not admin context, add appropriate filter..
+        if context.project_id:
+            filters['project_id'] = context.project_id
+        else:
+            filters['user_id'] = context.user_id
+
+    # Filters for exact matches that we can do along with the SQL query...
+    # For other filters that don't match this, we will do regexp matching
+    exact_match_filter_names = []
+
+    # Filter the query
+    query_prefix = exact_filter(query_prefix, models.SecurityGroup,
+                                filters, exact_match_filter_names)
+
+    query_prefix = regex_filter(query_prefix, models.SecurityGroup, filters)
+
+    rules = query_prefix.all()
+    return rules
 
 @require_context
 def security_group_get(context, security_group_id, columns_to_join=None):
