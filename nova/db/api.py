@@ -736,13 +736,13 @@ def instance_add_security_group(context, instance_id, security_group_id, update_
                                             security_group_id)
     if update_cells:
         try:
-            instance = instance_get_by_uuid(context, instance_id)
             cells_rpcapi.CellsAPI().instance_add_security_group(context,
-                instance,
+                instance_id,
                 security_group_id)
         except Exception:
             LOG.exception(_("Failed to notify cells of instance add security group"))
     return rv
+
 
 def instance_remove_security_group(context, instance_id, security_group_id, update_cells=True):
     """Disassociate the given security group from the given instance."""
@@ -750,9 +750,8 @@ def instance_remove_security_group(context, instance_id, security_group_id, upda
                                             security_group_id)
     if update_cells:
         try:
-            instance = instance_get_by_uuid(context, instance_id)
             cells_rpcapi.CellsAPI().instance_remove_security_group(context,
-                instance,
+                instance_id,
                 security_group_id)
         except Exception:
             LOG.exception(_("Failed to notify cells of instance remove security group"))
@@ -1247,6 +1246,11 @@ def security_group_get(context, security_group_id, columns_to_join=None):
     return IMPL.security_group_get(context, security_group_id,
                                    columns_to_join)
 
+
+def security_group_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+    return IMPL.security_group_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None)
 
 def security_group_get_by_name(context, project_id, group_name):
     """Returns a security group with the specified name from a project."""
