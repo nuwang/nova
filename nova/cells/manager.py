@@ -25,6 +25,7 @@ import oslo_messaging
 from oslo_utils import importutils
 from oslo_utils import timeutils
 
+from nova.cells import consistency
 from nova.cells import messaging
 from nova.cells import state as cells_state
 from nova.cells import utils as cells_utils
@@ -95,6 +96,12 @@ class CellsManager(manager.Manager):
                 CONF.cells.driver)
         self.driver = cells_driver_cls()
         self.instances_to_heal = iter([])
+        self.consistency_handlers = {
+            'security groups': consistency.GroupConsistencyHandler(self.db),
+            'rules': consistency.RuleConsistencyHandler(self.db),
+            'instance associations':
+                consistency.InstanceAssociationConsistencyHandler(self.db)
+        }
 
     def post_start_hook(self):
         """Have the driver start its servers for inter-cell communication.
@@ -672,8 +679,31 @@ class CellsManager(manager.Manager):
                 instance_uuid, group_p)
 
     def instance_remove_security_group(self, ctxt, instance_uuid, group_id):
-        group = self.db.security_group_get(ctxt.elevated(), group_id)
+        try:
+            group = self.db.security_group_get(ctxt.elevated(), group_id)
+        except exception.SecurityGroupNotFound:
+            return
         group_p = {'project_id': group['project_id'],
                    'name': group['name']}
         self.msg_runner.instance_remove_security_group(ctxt,
                 instance_uuid, group_p)
+
+    def _heal_resource(self, ctxt, resource_name, from_top=True):
+        if from_top and self.state_manager.get_parent_cells():
+            return
+        elif not from_top and self.state_manager.get_child_cells():
+            return
+        handler = self.consistency_handlers[resource_name]
+        handler.heal_entries(ctxt)
+
+    @periodic_task.periodic_task
+    def _heal_security_groups(self, ctxt):
+        self._heal_resource(ctxt, 'security groups')
+
+    @periodic_task.periodic_task
+    def _heal_security_group_rules(self, ctxt):
+        self._heal_resource(ctxt, 'rules')
+
+    @periodic_task.periodic_task
+    def _heal_instance_associations(self, ctxt):
+        self._heal_resource(ctxt, 'instance associations', from_top=False)
