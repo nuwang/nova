@@ -417,20 +417,22 @@ class CellsAPI(rpc_proxy.RpcProxy):
                                       rule=rule, group=group_p),
                   version='1.6.1')
 
-    def instance_add_security_group(self, ctxt, instance, security_group_id):
+    def instance_add_security_group(self, ctxt, instance_uuid,
+                                    security_group_id):
         """Broadcast security group instance association add upward"""
         if not CONF.cells.enable:
             return
         self.cast(ctxt, self.make_msg('instance_add_security_group',
-                                      instance_uuid=instance['uuid'],
+                                      instance_uuid=instance_uuid,
                                       group_id=security_group_id),
                   version='1.6.1')
 
-    def instance_remove_security_group(self, ctxt, instance, security_group_id):
+    def instance_remove_security_group(self, ctxt, instance_uuid,
+                                       security_group_id):
         """Broadcast security group instance association remove upward"""
         if not CONF.cells.enable:
             return
         self.cast(ctxt, self.make_msg('instance_remove_security_group',
-                                      instance_uuid=instance['uuid'],
+                                      instance_uuid=instance_uuid,
                                       group_id=security_group_id),
                   version='1.6.1')
