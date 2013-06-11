@@ -1027,7 +1027,7 @@ class CloudTestCase(test.TestCase):
                               'instanceState': {'code': 16,
                                                 'name': 'running'},
                               'instanceType': u'm1.medium',
-                              'ipAddress': '1.2.3.4',
+                              'ipAddress': '192.168.0.3',
                               'keyName': 'None (None, host1)',
                               'launchTime':
                                   datetime.datetime(2012, 5, 1, 1, 1, 1,
@@ -1058,7 +1058,7 @@ class CloudTestCase(test.TestCase):
                                'instanceState': {'code': 16,
                                                  'name': 'running'},
                                'instanceType': u'm1.medium',
-                               'ipAddress': '1.2.3.4',
+                               'ipAddress': '192.168.0.3',
                                'keyName': u'None (None, host2)',
                                'launchTime':
                                    datetime.datetime(2012, 5, 1, 1, 1, 2,

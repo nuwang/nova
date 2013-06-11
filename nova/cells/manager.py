@@ -221,6 +221,15 @@ class CellsManager(manager.Manager):
         if call:
             return response.value_or_raise()
 
+    def run_securitygroup_api_method(self, ctxt, cell_name, method_info, call):
+        """Call a securitygroup API method in a specific cell."""
+        response = self.msg_runner.run_securitygroup_api_method(ctxt,
+                                                                cell_name,
+                                                                method_info,
+                                                                call)
+        if call:
+            return response.value_or_raise()
+
     def instance_update_at_top(self, ctxt, instance):
         """Update an instance at the top level cell."""
         self.msg_runner.instance_update_at_top(ctxt, instance)
@@ -619,3 +628,29 @@ class CellsManager(manager.Manager):
     def flavor_create(self, ctxt, cell_name, values):
         response = self.msg_runner.flavor_create(ctxt,
                 cell_name, values)
+
+    def security_group_create(self, ctxt, group):
+        self.msg_runner.security_group_create(ctxt, group)
+
+    def security_group_destroy(self, ctxt, group):
+        self.msg_runner.security_group_destroy(ctxt, group)
+
+    def security_group_rule_create(self, ctxt, group, rule):
+        self.msg_runner.security_group_rule_create(ctxt, group, rule)
+
+    def security_group_rule_destroy(self, ctxt, group, rule):
+        self.msg_runner.security_group_rule_destroy(ctxt, group, rule)
+
+    def instance_add_security_group(self, ctxt, instance_uuid, group_id):
+        group = self.db.security_group_get(ctxt.elevated(), group_id)
+        group_p = {'project_id': group['project_id'],
+                   'name': group['name']}
+        self.msg_runner.instance_add_security_group(ctxt,
+                instance_uuid, group_p)
+
+    def instance_remove_security_group(self, ctxt, instance_uuid, group_id):
+        group = self.db.security_group_get(ctxt.elevated(), group_id)
+        group_p = {'project_id': group['project_id'],
+                   'name': group['name']}
+        self.msg_runner.instance_remove_security_group(ctxt,
+                instance_uuid, group_p)
