@@ -35,6 +35,7 @@ from nova.compute import task_states
 from nova.compute import vm_states
 from nova.consoleauth import rpcapi as consoleauth_rpcapi
 from nova import context
+from nova import db
 from nova.db import base
 from nova import exception
 from nova.objects import base as objects_base
@@ -622,9 +623,11 @@ class _BaseMessageMethods(base.Base):
         # processing of messages
         self.compute_api = compute.api.API()
         self.aggregate_api = compute.api.AggregateAPI()
+        self.securitygroup_api = compute.api.SecurityGroupAPI()
         self.compute_rpcapi = compute_rpcapi.ComputeAPI()
         self.consoleauth_rpcapi = consoleauth_rpcapi.ConsoleAuthAPI()
         self.host_api = compute.HostAPI()
+        self.securitygroup_rpcapi = compute_rpcapi.SecurityGroupAPI()
 
     def task_log_get_all(self, message, task_name, period_beginning,
                          period_ending, host, state):
@@ -669,6 +672,25 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         """Parent cell told us to schedule new instance creation."""
         self.msg_runner.scheduler.build_instances(message, build_inst_kwargs)
 
+    def _instance_get_by_uuid(self, ctxt, instance_uuid):
+        try:
+            instance = self.db.instance_get_by_uuid(ctxt, instance_uuid)
+        except exception.InstanceNotFound:
+            with excutils.save_and_reraise_exception():
+                # Must be a race condition.  Let's try to resolve it by
+                # telling the top level cells that this instance doesn't
+                # exist.
+                instance = {'uuid': instance_uuid}
+                self.msg_runner.instance_destroy_at_top(ctxt, instance)
+        # FIXME(comstud): This is temporary/transitional until I can
+        # work out a better way to pass full objects down.
+        EXPECTS_OBJECTS = ['start', 'stop']
+        if method in EXPECTS_OBJECTS:
+            inst_obj = instance_obj.Instance()
+            inst_obj._from_db_object(ctxt, inst_obj, instance)
+            instance = inst_obj
+        return instance
+
     def run_compute_api_method(self, message, method_info):
         """Run a method in the compute api class."""
         method = method_info['method']
@@ -681,24 +703,23 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         # 1st arg is instance_uuid that we need to turn into the
         # instance object.
         instance_uuid = args[0]
-        try:
-            instance = self.db.instance_get_by_uuid(message.ctxt,
-                                                    instance_uuid)
-        except exception.InstanceNotFound:
-            with excutils.save_and_reraise_exception():
-                # Must be a race condition.  Let's try to resolve it by
-                # telling the top level cells that this instance doesn't
-                # exist.
-                instance = {'uuid': instance_uuid}
-                self.msg_runner.instance_destroy_at_top(message.ctxt,
-                                                        instance)
-        # FIXME(comstud): This is temporary/transitional until I can
-        # work out a better way to pass full objects down.
-        EXPECTS_OBJECTS = ['start', 'stop']
-        if method in EXPECTS_OBJECTS:
-            inst_obj = instance_obj.Instance()
-            inst_obj._from_db_object(message.ctxt, inst_obj, instance)
-            instance = inst_obj
+        instance = self._instance_get_by_uuid(message.ctxt, instance_uuid)
+        args[0] = instance
+        return fn(message.ctxt, *args, **method_info['method_kwargs'])
+
+    def run_securitygroup_api_method(self, message, method_info):
+        """Run a method in the securitygroup api class."""
+        method = method_info['method']
+        fn = getattr(self.securitygroup_api, method, None)
+        if not fn:
+            detail = _("Unknown method '%(method)s' in securitygroup API")
+            raise exception.CellServiceAPIMethodNotFound(
+                    detail=detail % locals())
+        args = list(method_info['method_args'])
+        # 1st arg is instance_uuid that we need to turn into the
+        # instance object.
+        instance_uuid = args[0]
+        instance = self._instance_get_by_uuid(message.ctxt, instance_uuid)
         args[0] = instance
         return fn(message.ctxt, *args, **method_info['method_kwargs'])
 
@@ -1213,6 +1234,235 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
         response = self.aggregate_api.get_aggregate_list(message.ctxt)
         return jsonutils.to_primitive(response)
 
+    def security_group_create(self, message, group):
+        ctxt = message.ctxt
+
+        group_dict = dict(group.iteritems())
+        LOG.debug(_("Received message to create group %(group_dict)s") % locals())
+
+        # See if this already exists
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                group['project_id'],
+                group['name']
+            )
+        except exception.SecurityGroupNotFound:
+            #Doesn't exist so we'll create it
+            LOG.info(_("Adding missing security group %s" % ((dict(group.iteritems())))))
+            self.db.security_group_create(ctxt, group, update_cells=False)
+
+    def security_group_destroy(self, message, group):
+
+        LOG.debug(_("Received message to destroy group %s" % ((dict(group.iteritems())))))
+        ctxt = message.ctxt
+
+        # See if this group exists and remove it
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                group['project_id'],
+                group['name']
+            )
+            # Exists so destroy
+            LOG.info(_("Deleting out of sync security group %s" % ((dict(group.iteritems())))))
+            self.db.security_group_destroy(ctxt, group['id'], update_cells=False)
+        except exception.SecurityGroupNotFound:
+            # Doesn't exist so do nothing
+            pass
+
+    def _refresh_group_security_rules(self, ctxt, group):
+        instances = group['instances']
+        for instance in instances:
+            self.securitygroup_rpcapi.refresh_instance_security_rules(ctxt,
+                instance['host'], instance)
+
+    def security_group_rule_create(self, message, rule):
+        ctxt = message.ctxt
+
+        rule_dict = dict(rule.iteritems())
+        LOG.debug(_("Received message to create rule %(rule_dict)s"), locals())
+
+        # NOTE(shauno): The parent group id was replaced with the
+        # group name and project id when this message was created
+        # so we could link this rule back to the correct parent group
+        # even if ids get out of sync between parent and child cells.
+        # Use them to find the correct parent group and replace them
+        # with the id.
+        rule = rule.copy()
+        security_group_name = rule.pop('parent_group_name', None)
+        security_group_pid = rule.pop('parent_group_pid', None)
+        linked_group_name = rule.pop('linked_group_name', None)
+
+        if not security_group_name or not security_group_pid:
+            LOG.error(_("Could not add rule %(rule)s "
+                        "to group '%(security_group_name)s' "
+                        "(no parent name/project)"),
+                      locals())
+            return
+
+        # Security group name and project id were included correctly
+
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                security_group_pid,
+                security_group_name
+            )
+        except exception.SecurityGroupNotFound:
+            LOG.error(_("Could not add rule %(rule)s "
+                        "to group '%(security_group_name)s' "
+                        "(group missing from db)"),
+                      locals())
+            return
+
+        if linked_group_name:
+            try:
+                linked_group = self.db.security_group_get_by_name(
+                    ctxt,
+                    security_group_pid,
+                    linked_group_name,
+                )
+                rule['group_id'] = linked_group['id']
+            except exception.SecurityGroupNotFound:
+                LOG.error(_("Could not add rule %(rule)s "
+                            "to group '%(security_group_name)s' "
+                            "(linked group missing from db)"),
+                          locals())
+                return
+
+        rule['parent_group_id'] = group['id']
+        # Check to see if rule exists already (only check for active entries)
+        existing_rule = rule.copy()
+        existing_rule['deleted'] = False
+        existing_rule = self.db.security_group_rule_get_all_by_filters(
+            ctxt, existing_rule, 'deleted', 'asc')
+        if not existing_rule:
+            LOG.info(_("Adding missing security group rule %s" % ((dict(rule.iteritems())))))
+            self.db.security_group_rule_create(ctxt, rule, update_cells=False)
+            self._refresh_group_security_rules(ctxt, group)
+
+    def security_group_rule_destroy(self, message, rule):
+        # TODO(kspear): Refactor this to share code from rule_create above.
+        LOG.debug(_("Received message to delete rule %s" % (rule)))
+
+        ctxt = message.ctxt
+
+        rule = rule.copy()
+        security_group_name = rule.pop('parent_group_name', None)
+        security_group_pid = rule.pop('parent_group_pid', None)
+        linked_group_name = rule.pop('linked_group_name', None)
+
+        if not security_group_name or not security_group_pid:
+            LOG.error(_( "Could not remove rule %(rule)s "
+                         "to group '%(security_group_name)s' (group missing from db)"),
+                      locals())
+            return
+
+        # Security group name and project id were included correctly
+
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                security_group_pid,
+                security_group_name
+            )
+        except exception.SecurityGroupNotFound:
+            LOG.warn(_("Could not remove rule %(rule)s "
+                       "from group '%(security_group_name)s' "
+                       "(group missing from db)"),
+                     locals())
+            #May need to make this better
+            return
+
+        if linked_group_name:
+            try:
+                linked_group = self.db.security_group_get_by_name(
+                    ctxt,
+                    security_group_pid,
+                    linked_group_name,
+                )
+                rule['group_id'] = linked_group['id']
+            except exception.SecurityGroupNotFound:
+                LOG.warn(_("Could not remove rule %(rule)s "
+                           "to group '%(security_group_name)s' "
+                           "(linked group missing from db)"),
+                         locals())
+                #TODO May need to make this better
+                return
+
+        rule['parent_group_id'] = group['id']
+        rule['deleted'] = False
+        rules = self.db.security_group_rule_get_all_by_filters(ctxt,
+                    rule, 'deleted', 'asc')
+        if rules:
+            rule_to_delete = rules[0]
+            LOG.info(_("Deleting out of sync security group rule %s"),
+                     dict(rule_to_delete.iteritems()))
+            self.db.security_group_rule_destroy(ctxt, rule_to_delete['id'])
+            self._refresh_group_security_rules(ctxt, group)
+
+    def _association_exists(self, ctxt, instance_uuid, group_id):
+        filters = {'instance_uuid': instance_uuid,
+                   'security_group_id': group_id,
+                   'deleted': False}
+        return self.db.security_group_instance_association_get_all_by_filters(
+                   ctxt, filters, 'deleted', 'asc')
+
+    def instance_add_security_group(self, message, instance_uuid, group):
+        LOG.debug(_("Received message to add security group %(name)s to "
+                    "instance %(instance_uuid)s"),
+                  {'instance_uuid': instance_uuid, 'name': group['name']})
+        if not self._at_the_top():
+            return
+        ctxt = message.ctxt
+        group_name = group['name']
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                group['project_id'],
+                group['name']
+            )
+            exists = self._association_exists(ctxt, instance_uuid, group['id'])
+        except exception.SecurityGroupNotFound:
+            LOG.error(_("Could not associate instance %(instance_uuid)s "
+                        "with group '%(group_name)s' "
+                        "(group missing from db)"),
+                      {'group_name': group_name,
+                       'instance_uuid': instance_uuid})
+            return
+        if not exists:
+            self.db.instance_add_security_group(ctxt,
+                    instance_uuid, group['id'],
+                    update_cells=False)
+
+    def instance_remove_security_group(self, message, instance_uuid, group):
+        LOG.debug(_("Received message to remove security group %(name)s to "
+                    "instance %(instance_uuid)s"),
+                  {'instance_uuid': instance_uuid, 'name': group['name']})
+        if not self._at_the_top():
+            return
+        ctxt = message.ctxt
+        group_name = group['name']
+        try:
+            group = self.db.security_group_get_by_name(
+                ctxt,
+                group['project_id'],
+                group['name']
+            )
+            exists = self._association_exists(ctxt, instance_uuid, group['id'])
+        except exception.SecurityGroupNotFound:
+            LOG.error(_("Could not disassociate instance %(instance_uuid)s "
+                        "from group '%(group_name)s' "
+                        "(group missing from db)"),
+                      {'group_name': group_name,
+                       'instance_uuid': instance_uuid})
+            return
+        if exists:
+            self.db.instance_remove_security_group(ctxt,
+                    instance_uuid, group['id'],
+                    update_cells=False)
+
 
 _CELL_MESSAGE_TYPE_TO_MESSAGE_CLS = {'targeted': _TargetedMessage,
                                      'broadcast': _BroadcastMessage,
@@ -1422,6 +1672,13 @@ class MessageRunner(object):
     def run_compute_api_method(self, ctxt, cell_name, method_info, call):
         """Call a compute API method in a specific cell."""
         message = _TargetedMessage(self, ctxt, 'run_compute_api_method',
+                                   dict(method_info=method_info), 'down',
+                                   cell_name, need_response=call)
+        return message.process()
+
+    def run_securitygroup_api_method(self, ctxt, cell_name, method_info, call):
+        """Call a compute API method in a specific cell."""
+        message = _TargetedMessage(self, ctxt, 'run_securitygroup_api_method',
                                    dict(method_info=method_info), 'down',
                                    cell_name, need_response=call)
         return message.process()
@@ -1788,7 +2045,7 @@ class MessageRunner(object):
                                    method_kwargs, 'down',
                                    cell_name, need_response=True)
         return message.process()
- 
+
     def get_aggregate(self, ctxt, cell_name, aggregate_id):
         method_kwargs = dict(aggregate_id=aggregate_id)
         message = _TargetedMessage(self, ctxt, 'get_aggregate',
@@ -1858,6 +2115,82 @@ class MessageRunner(object):
                                    method_kwargs, 'down',
                                    cell_name, need_response=True)
         return message.process()
+
+    def _security_group_create_or_destroy(self, ctxt, group, create=True):
+        """Create a special message for adding security groups which
+        sends by name and project_id which is unique,
+        id can get out of sync between child/parent cells"""
+        security_group_dict = dict(group.iteritems())
+        remove = ['id', 'deleted', 'created_at', 'updated_at', 'deleted_at']
+        for item in remove:
+            if item in security_group_dict:
+                security_group_dict.pop(item)
+        if create:
+            method = 'security_group_create'
+        else:
+            method = 'security_group_destroy'
+        message = _BroadcastMessage(self, ctxt, method,
+                                    dict(group=security_group_dict),
+                                    'down', run_locally=False)
+        message.process()
+
+    def security_group_create(self, ctxt, group):
+        self._security_group_create_or_destroy(ctxt, group, create=True)
+
+    def security_group_destroy(self, ctxt, group):
+        self._security_group_create_or_destroy(ctxt, group, create=False)
+
+    def _security_group_rule_create_or_destroy(self, ctxt, group, rule,
+                                               create=True):
+        """Create a special message for adding security group rules which
+        sends unique information about a parent group rather than the id,
+        which can get out of sync between child/parent cells"""
+        security_group_rule_dict = dict(rule.iteritems())
+        linked_id = security_group_rule_dict.pop('group_id', None)
+        remove = ['id', 'deleted', 'created_at', 'updated_at',
+                  'deleted_at', 'group_id', 'parent_group_id']
+        for item in remove:
+            if item in security_group_rule_dict:
+                security_group_rule_dict.pop(item)
+
+        security_group_rule_dict['parent_group_name'] = group['name']
+        security_group_rule_dict['parent_group_pid'] = group['project_id']
+
+        if linked_id:
+            rd_ctxt = ctxt.elevated(read_deleted='yes')
+            linked_group = db.security_group_get(rd_ctxt, linked_id)
+            security_group_rule_dict['linked_group_name'] = linked_group.name
+        if create:
+            method = 'security_group_rule_create'
+        else:
+            method = 'security_group_rule_destroy'
+
+        message = _BroadcastMessage(self, ctxt, method,
+                                    dict(rule=security_group_rule_dict),
+                                    'down', run_locally=False)
+        message.process()
+
+    def security_group_rule_create(self, ctxt, group, rule):
+        self._security_group_rule_create_or_destroy(ctxt, group, rule,
+                                                    create=True)
+
+    def security_group_rule_destroy(self, ctxt, group, rule):
+        self._security_group_rule_create_or_destroy(ctxt, group, rule,
+                                                    create=False)
+
+    def instance_add_security_group(self, ctxt, instance_uuid, group):
+        method_kwargs = {'instance_uuid': instance_uuid, 'group': group}
+        message = _BroadcastMessage(self, ctxt,
+                                    'instance_add_security_group',
+                                    method_kwargs, 'up', run_locally=False)
+        message.process()
+
+    def instance_remove_security_group(self, ctxt, instance_uuid, group):
+        method_kwargs = {'instance_uuid': instance_uuid, 'group': group}
+        message = _BroadcastMessage(self, ctxt,
+                                    'instance_remove_security_group',
+                                    method_kwargs, 'up', run_locally=False)
+        message.process()
 
     @staticmethod
     def get_message_types():

@@ -37,6 +37,7 @@ from nova.cloudpipe import pipelib
 from nova import compute
 from nova.compute import api as compute_api
 from nova.compute import flavors
+from nova.compute import cells_api
 from nova.compute import vm_states
 from nova import db
 from nova import exception
@@ -1892,10 +1893,18 @@ class CloudSecurityGroupNeutronAPI(EC2SecurityGroupExceptions,
     pass
 
 
+class CloudSecurityGroupNovaCellsAPI(EC2SecurityGroupExceptions,
+                                     cells_api.SecurityGroupAPI):
+    pass
+
+
 def get_cloud_security_group_api():
-    if cfg.CONF.security_group_api.lower() == 'nova':
+    api_name_or_class = cfg.CONF.security_group_api.lower()
+    if api_name_or_class == 'nova':
         return CloudSecurityGroupNovaAPI()
-    elif cfg.CONF.security_group_api.lower() in ('neutron', 'quantum'):
+    elif api_name_or_class == 'nova-cells':
+        return CloudSecurityGroupNovaCellsAPI()
+    elif api_name_or_class in ('neutron', 'quantum'):
         return CloudSecurityGroupNeutronAPI()
     else:
         raise NotImplementedError()

@@ -123,7 +123,21 @@ class CellsAPI(rpcclient.RpcProxy):
                                 method_info=method_info,
                                 call=True)
 
+<<<<<<< HEAD
     # NOTE(alaski): Deprecated and should be removed later.
+=======
+    def cast_securitygroup_api_method(self, ctxt, cell_name, method,
+            *args, **kwargs):
+        """Make a cast to a securitygroup API method in a certain cell."""
+        method_info = {'method': method,
+                       'method_args': args,
+                       'method_kwargs': kwargs}
+        self.cast(ctxt, self.make_msg('run_securitygroup_api_method',
+                                      cell_name=cell_name,
+                                      method_info=method_info,
+                                      call=False))
+
+>>>>>>> 47eda08... Cells: Event-based secgroup/rule/assoc syncing
     def schedule_run_instance(self, ctxt, **kwargs):
         """Schedule a new instance for creation."""
         self.client.cast(ctxt, 'schedule_run_instance',
@@ -649,3 +663,54 @@ class CellsAPI(rpcclient.RpcProxy):
                               internal_access_path=internal_access_path,
                               instance_uuid=instance_uuid),
                 version="1.24.1")
+
+    def security_group_create(self, ctxt, group):
+        """Broadcast security group create request downward"""
+        if not CONF.cells.enable:
+            return
+        group_p = jsonutils.to_primitive(group)
+        self.cast(ctxt, self.make_msg('security_group_create', group=group_p),
+                  version='1.24.2')
+
+    def security_group_destroy(self, ctxt, group):
+        """Broadcast security group destroy request downward"""
+        if not CONF.cells.enable:
+            return
+        group_p = jsonutils.to_primitive(group)
+        self.cast(ctxt, self.make_msg('security_group_destroy', group=group_p))
+
+    def security_group_rule_create(self, ctxt, group, rule):
+        """Broadcast security group rule create request downward"""
+        if not CONF.cells.enable:
+            return
+        group_p = jsonutils.to_primitive(group)
+        self.cast(ctxt, self.make_msg('security_group_rule_create',
+                                      rule=rule, group=group_p),
+                  version='1.24.2')
+
+    def security_group_rule_destroy(self, ctxt, group, rule):
+        """Broadcast security group rule create request downward"""
+        if not CONF.cells.enable:
+            return
+        group_p = jsonutils.to_primitive(group)
+        self.cast(ctxt, self.make_msg('security_group_rule_destroy',
+                                      rule=rule, group=group_p),
+                  version='1.24.2')
+
+    def instance_add_security_group(self, ctxt, instance, security_group_id):
+        """Broadcast security group instance association add upward"""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('instance_add_security_group',
+                                      instance_uuid=instance['uuid'],
+                                      group_id=security_group_id),
+                  version='1.24.2')
+
+    def instance_remove_security_group(self, ctxt, instance, security_group_id):
+        """Broadcast security group instance association remove upward"""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('instance_remove_security_group',
+                                      instance_uuid=instance['uuid'],
+                                      group_id=security_group_id),
+                  version='1.24.2')
