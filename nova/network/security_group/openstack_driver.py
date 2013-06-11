@@ -30,6 +30,8 @@ NOVA_DRIVER = ('nova.api.openstack.compute.contrib.security_groups.'
                'NativeNovaSecurityGroupAPI')
 NEUTRON_DRIVER = ('nova.api.openstack.compute.contrib.security_groups.'
                   'NativeNeutronSecurityGroupAPI')
+NOVA_CELLS_DRIVER = ('nova.api.openstack.compute.contrib.security_groups.'
+                     'NativeNovaCellsSecurityGroupAPI')
 
 
 def get_openstack_security_group_driver():
@@ -37,6 +39,8 @@ def get_openstack_security_group_driver():
         return importutils.import_object(NOVA_DRIVER)
     elif CONF.security_group_api.lower() in ('neutron', 'quantum'):
         return importutils.import_object(NEUTRON_DRIVER)
+    elif CONF.security_group_api.lower() == 'nova-cells':
+        return importutils.import_object(NOVA_CELLS_DRIVER)
     else:
         return importutils.import_object(CONF.security_group_api)
 
