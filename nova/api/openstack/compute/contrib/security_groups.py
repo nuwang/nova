@@ -27,6 +27,7 @@ from nova.api.openstack import wsgi
 from nova.api.openstack import xmlutil
 from nova import compute
 from nova.compute import api as compute_api
+from nova.compute import cells_api
 from nova import exception
 from nova.i18n import _
 from nova.network.security_group import neutron_driver
@@ -706,4 +707,9 @@ class NativeNovaSecurityGroupAPI(NativeSecurityGroupExceptions,
 
 class NativeNeutronSecurityGroupAPI(NativeSecurityGroupExceptions,
                                     neutron_driver.SecurityGroupAPI):
+    pass
+
+
+class NativeNovaCellsSecurityGroupAPI(NativeSecurityGroupExceptions,
+                                      cells_api.SecurityGroupAPI):
     pass
