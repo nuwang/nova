@@ -2276,6 +2276,53 @@ def instance_remove_security_group(context, instance_uuid, security_group_id):
                 filter_by(security_group_id=security_group_id).\
                 soft_delete()
 
+@require_context
+def security_group_instance_association_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+
+    sort_fn = {'desc': desc, 'asc': asc}
+    session = get_session()
+    query_prefix = session.query(models.SecurityGroupInstanceAssociation).\
+            order_by(sort_fn[sort_dir](getattr(models.SecurityGroupInstanceAssociation, sort_key)))
+
+    # Make a copy of the filters dictionary to use going forward, as we'll
+    # be modifying it and we shouldn't affect the caller's use of it.
+    filters = filters.copy()
+
+    if 'changes-since' in filters:
+        changes_since = timeutils.normalize_time(filters['changes-since'])
+        query_prefix = query_prefix.\
+                            filter(models.SecurityGroupInstanceAssociation.updated_at > changes_since)
+
+    if 'deleted' in filters:
+        if filters.pop('deleted'):
+            deleted = (models.SecurityGroupInstanceAssociation.deleted ==
+                          models.SecurityGroupInstanceAssociation.id)
+            query_prefix = query_prefix.filter(deleted)
+        else:
+            query_prefix = query_prefix.\
+                    filter_by(deleted=0)
+
+    if not context.is_admin:
+        # If we're not admin context, add appropriate filter..
+        if context.project_id:
+            filters['project_id'] = context.project_id
+        else:
+            filters['user_id'] = context.user_id
+
+    # Filters for exact matches that we can do along with the SQL query...
+    # For other filters that don't match this, we will do regexp matching
+    exact_match_filter_names = ['id', 'uuid']
+
+    # Filter the query
+    query_prefix = exact_filter(query_prefix, models.SecurityGroupInstanceAssociation,
+                                filters, exact_match_filter_names)
+
+    query_prefix = regex_filter(query_prefix, models.SecurityGroupInstanceAssociation, filters)
+
+    instance_associations = query_prefix.all()
+    return instance_associations
+
 
 ###################
 
@@ -3544,6 +3591,7 @@ def _security_group_create(context, values, session=None):
     # FIXME(devcamcar): Unless I do this, rules fails with lazy load exception
     # once save() is called.  This will get cleaned up in next orm pass.
     security_group_ref.rules
+    security_group_ref.instances
     security_group_ref.update(values)
     try:
         security_group_ref.save(session=session)
@@ -3797,6 +3845,50 @@ def security_group_rule_get_by_security_group(context, security_group_id):
             options(joinedload('grantee_group.instances.'
                                'info_cache')).
             all())
+
+
+@require_context
+def security_group_rule_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+
+    sort_fn = {'desc': desc, 'asc': asc}
+
+    session = get_session()
+    query_prefix = session.query(models.SecurityGroupIngressRule).\
+            order_by(sort_fn[sort_dir](getattr(models.SecurityGroupIngressRule, sort_key)))
+
+    # Make a copy of the filters dictionary to use going forward, as we'll
+    # be modifying it and we shouldn't affect the caller's use of it.
+    filters = filters.copy()
+
+    if 'changes-since' in filters:
+        changes_since = timeutils.normalize_time(filters['changes-since'])
+        query_prefix = query_prefix.\
+                            filter(models.SecurityGroupIngressRule.updated_at > changes_since)
+
+    if 'deleted' in filters:
+        if filters.pop('deleted'):
+            deleted = (models.SecurityGroupIngressRule.deleted ==
+                          models.SecurityGroupIngressRule.id)
+            query_prefix = query_prefix.filter(deleted)
+        else:
+            query_prefix = query_prefix.\
+                    filter_by(deleted=0)
+
+    # Filters for exact matches that we can do along with the SQL query...
+    # For other filters that don't match this, we will do regexp matching
+    # Need to match on these as they can be None
+    exact_match_filter_names = ['cidr', 'group_id', 'parent_group_id',
+                                'protocol', 'from_port', 'to_port']
+
+    # Filter the query
+    query_prefix = exact_filter(query_prefix, models.SecurityGroupIngressRule,
+                                filters, exact_match_filter_names)
+
+    query_prefix = regex_filter(query_prefix, models.SecurityGroupIngressRule, filters)
+
+    rules = query_prefix.all()
+    return rules
 
 
 @require_context
