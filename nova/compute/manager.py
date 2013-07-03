@@ -3135,10 +3135,11 @@ class ComputeManager(manager.SchedulerDependentManager):
             raise exception.FixedIpNotFoundForInstance(
                                        instance_uuid=instance['uuid'])
 
-        self.driver.pre_live_migration(context, instance,
-                                       block_device_info,
-                                       self._legacy_nw_info(network_info),
-                                       migrate_data)
+        pre_live_migration_data = self.driver.pre_live_migration(context, instance,
+                                            block_device_info,
+                                            self._legacy_nw_info(network_info),
+                                            disk,
+                                            migrate_data)
 
         # NOTE(tr3buchet): setup networks on destination host
         self.network_api.setup_networks_on_host(context, instance,
@@ -3153,10 +3154,13 @@ class ComputeManager(manager.SchedulerDependentManager):
         self.driver.ensure_filtering_rules_for_instance(instance,
                                             self._legacy_nw_info(network_info))
 
-        # Preparation for block migration
-        if block_migration:
-            self.driver.pre_block_migration(context, instance, disk)
+        self._notify_about_instance_usage(
+                     context, instance, "live_migration.pre.end",
+                     network_info=network_info)
 
+        return pre_live_migration_data
+
+    @exception.wrap_exception(notifier=notifier, publisher_id=publisher_id())
     def live_migration(self, context, dest, instance,
                        block_migration=False, migrate_data=None):
         """Executing live migration.
