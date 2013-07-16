@@ -24,6 +24,7 @@ from nova.api.openstack import xmlutil
 from nova import compute
 from nova import exception
 from nova.openstack.common.gettextutils import _
+from nova.openstack.common import timeutils
 from nova import servicegroup
 from nova import utils
 
