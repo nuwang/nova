@@ -291,10 +291,10 @@ class _BaseTestCase(object):
         self.assertEqual(port, backdoor_port)
 
     def test_security_group_get_by_instance(self):
-        fake_instance = {'id': 'fake-instance'}
+        fake_instance = {'id': 'fake-instance', 'uuid': 'fake-uuid'}
         self.mox.StubOutWithMock(db, 'security_group_get_by_instance')
         db.security_group_get_by_instance(
-            self.context, fake_instance['id']).AndReturn('it worked')
+            self.context, fake_instance['uuid']).AndReturn('it worked')
         self.mox.ReplayAll()
         result = self.conductor.security_group_get_by_instance(self.context,
                                                                fake_instance)
