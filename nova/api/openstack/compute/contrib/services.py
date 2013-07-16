@@ -25,6 +25,7 @@ from nova import compute
 from nova import db
 from nova import exception
 from nova.openstack.common import log as logging
+from nova.openstack.common import timeutils
 from nova import servicegroup
 
 LOG = logging.getLogger(__name__)
