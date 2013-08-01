@@ -667,6 +667,13 @@ def instance_get_all_hung_in_rebooting(context, reboot_window):
     return IMPL.instance_get_all_hung_in_rebooting(context, reboot_window)
 
 
+def _create_instance_name_metadata(context, instance):
+    system_metadata = instance.get('system_metadata', {})
+    if 'instance_name' not in system_metadata:
+        meta = {'instance_name': instance['name']}
+        instance_system_metadata_update(context, instance['uuid'], meta, False)
+
+
 def instance_update(context, instance_uuid, values, update_cells=True):
     """Set the given properties on an instance and update it.
 
@@ -676,6 +683,7 @@ def instance_update(context, instance_uuid, values, update_cells=True):
     rv = IMPL.instance_update(context, instance_uuid, values)
     if update_cells:
         try:
+            _create_instance_name_metadata(context, rv)
             cells_rpcapi.CellsAPI().instance_update_at_top(context, rv)
         except Exception:
             LOG.exception(_("Failed to notify cells of instance update"))
@@ -704,6 +712,7 @@ def instance_update_and_get_original(context, instance_uuid, values,
                                                columns_to_join=columns_to_join)
     if update_cells:
         try:
+            _create_instance_name_metadata(context, rv[1])
             cells_rpcapi.CellsAPI().instance_update_at_top(context, rv[1])
         except Exception:
             LOG.exception(_("Failed to notify cells of instance update"))

@@ -6220,6 +6220,7 @@ class ComputeAPITestCase(BaseTestCase):
                 'image_min_disk': '1',
                 'image_ramdisk_id': 'fake_ramdisk_id',
                 'image_something_else': 'meow',
+                'instance_name': 'instance-00000001',
                 'preserved': 'preserve this!'})
         db.instance_destroy(self.context, instance['uuid'])
 
