@@ -14,10 +14,15 @@
 
 """The Extended Server Attributes API extension."""
 
+from oslo.config import cfg
+
 from nova.api.openstack import extensions
 from nova.api.openstack import wsgi
 from nova.api.openstack import xmlutil
 from nova.openstack.common import log as logging
+from nova import utils
+
+CONF = cfg.CONF
 
 LOG = logging.getLogger(__name__)
 authorize = extensions.soft_extension_authorizer('compute',
@@ -25,6 +30,12 @@ authorize = extensions.soft_extension_authorizer('compute',
 
 
 class ExtendedServerAttributesController(wsgi.Controller):
+    def _get_hypervisor_instance_name(self, context, instance):
+        if not CONF.cells.enable:
+            return instance['name']
+        sys_metadata = utils.metadata_to_dict(instance['system_metadata'])
+        return sys_metadata.get('instance_name', '')
+
     def _extend_server(self, context, server, instance):
         key = "%s:hypervisor_hostname" % Extended_server_attributes.alias
         server[key] = instance['node']
@@ -33,9 +44,12 @@ class ExtendedServerAttributesController(wsgi.Controller):
             if attr == 'name':
                 key = "%s:instance_%s" % (Extended_server_attributes.alias,
                                           attr)
+                server[key] = self._get_hypervisor_instance_name(context,
+                                                                 instance)
+
             else:
                 key = "%s:%s" % (Extended_server_attributes.alias, attr)
-            server[key] = instance[attr]
+                server[key] = instance[attr]
 
     @wsgi.extends
     def show(self, req, resp_obj, id):
