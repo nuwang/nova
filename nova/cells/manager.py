@@ -37,6 +37,7 @@ from nova import objects
 from nova.objects import base as base_obj
 from nova.objects import instance as instance_obj
 from nova.openstack.common import periodic_task
+from nova import quota
 
 cell_manager_opts = [
         cfg.StrOpt('driver',
@@ -48,7 +49,11 @@ cell_manager_opts = [
                         "or deleted to continue to update cells"),
         cfg.IntOpt("instance_update_num_instances",
                 default=1,
-                help="Number of instances to update per periodic task run")
+                help="Number of instances to update per periodic task run"),
+        cfg.BoolOpt("expire_reservations",
+                default=False,
+                help="If True, enable the periodic task for reservation "
+                     "expiry."),
 ]
 
 
@@ -57,6 +62,7 @@ CONF.import_opt('name', 'nova.cells.opts', group='cells')
 CONF.register_opts(cell_manager_opts, group='cells')
 
 LOG = logging.getLogger(__name__)
+QUOTAS = quota.QUOTAS
 
 
 class CellsManager(manager.Manager):
@@ -134,6 +140,11 @@ class CellsManager(manager.Manager):
         """
         self.msg_runner.tell_parents_our_capabilities(ctxt)
         self.msg_runner.tell_parents_our_capacities(ctxt)
+
+    @periodic_task.periodic_task
+    def _expire_reservations(self, context):
+        if CONF.cells.expire_reservations:
+            QUOTAS.expire(context)
 
     @periodic_task.periodic_task
     def _heal_instances(self, ctxt):
