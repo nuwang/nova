@@ -47,6 +47,7 @@ from oslo.config import cfg
 
 from nova.cells import rpcapi as cells_rpcapi
 from nova import exception
+from nova.utils import metadata_to_dict
 from nova.openstack.common.db import api as db_api
 from nova.openstack.common import log as logging
 
@@ -668,11 +669,21 @@ def instance_test_and_set(context, instance_uuid, attr, ok_states,
                                       ok_states, new_state)
 
 
-def _create_instance_name_metadata(context, instance):
-    system_metadata = instance.get('system_metadata', {})
+def _create_instance_extra_metadata(context, instance):
+    meta = {}
+    system_metadata = metadata_to_dict(instance.get('system_metadata', []))
+
     if 'instance_name' not in system_metadata:
-        meta = {'instance_name': instance['name']}
-        instance_system_metadata_update(context, instance['uuid'], meta, False)
+	meta['instance_name'] = instance['name']
+    if 'availability_zone' not in system_metadata:
+        if instance['host']:
+            aggregate_metadata = aggregate_metadata_get_by_host(
+		context, instance['host'], key='availability_zone')
+            if 'availability_zone' in aggregate_metadata:
+                az = list(aggregate_metadata['availability_zone'])[0]
+		meta['availability_zone'] = az
+    if meta:
+	instance_system_metadata_update(context, instance['uuid'], meta, False)
 
 
 def instance_update(context, instance_uuid, values, update_cells=True):
@@ -684,7 +695,7 @@ def instance_update(context, instance_uuid, values, update_cells=True):
     rv = IMPL.instance_update(context, instance_uuid, values)
     if update_cells:
         try:
-            _create_instance_name_metadata(context, rv)
+            _create_instance_extra_metadata(context, rv)
             cells_rpcapi.CellsAPI().instance_update_at_top(context, rv)
         except Exception:
             LOG.exception(_("Failed to notify cells of instance update"))
@@ -706,7 +717,7 @@ def instance_update_and_get_original(context, instance_uuid, values):
     """
     rv = IMPL.instance_update_and_get_original(context, instance_uuid, values)
     try:
-        _create_instance_name_metadata(context, rv[1])
+        _create_instance_extra_metadata(context, rv[1])
         cells_rpcapi.CellsAPI().instance_update_at_top(context, rv[1])
     except Exception:
         LOG.exception(_("Failed to notify cells of instance update"))
