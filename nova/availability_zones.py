@@ -21,6 +21,7 @@ from nova.cells import rpcapi as cell_rpcapi
 from nova import db
 from nova.openstack.common import memorycache
 from nova.openstack.common import timeutils
+from nova import utils
 
 # NOTE(vish): azs don't change that often, so cache them for an hour to
 #             avoid hitting the db multiple times on every request.
@@ -170,7 +171,11 @@ def get_instance_availability_zone(context, instance):
     cache = _get_cache()
     az = cache.get(cache_key)
     if not az:
-        elevated = context.elevated()
-        az = get_host_availability_zone(elevated, host, cell=cell_name)
+        sys_metadata = utils.instance_sys_meta(instance)
+        az = sys_metadata.get('availability_zone', None)
+        # If not in system metadata do a call down to the cell
+        if not az:
+            elevated = context.elevated()
+            az = get_host_availability_zone(elevated, host, cell=cell_name)
         cache.set(cache_key, az, AZ_CACHE_SECONDS)
     return az
