@@ -19,6 +19,7 @@ from oslo.config import cfg
 
 from nova.cells import rpcapi as cell_rpcapi
 from nova import db
+from nova import utils
 from nova.openstack.common import log as logging
 from nova.openstack.common import memorycache
 from nova.openstack.common import timeutils
@@ -132,7 +133,11 @@ def get_instance_availability_zone(context, instance):
     cache_key = "azcache-%s-%s" % (cell_name or 'none', host)
     az = MC.get(cache_key)
     if not az:
-        elevated = context.elevated()
-        az = get_host_availability_zone(elevated, host, cell=cell_name)
+        sys_metadata = utils.metadata_to_dict(instance['system_metadata'])
+        az = sys_metadata.get('availability_zone', None)
+        # If not in system metadata do a call down to the cell
+        if not az:
+            elevated = context.elevated()
+            az = get_host_availability_zone(elevated, host, cell=cell_name)
         MC.set(cache_key, az, AZ_CACHE_SECONDS)
     return az
