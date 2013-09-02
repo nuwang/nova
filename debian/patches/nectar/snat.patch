@@ -1,0 +1,71 @@
+diff --git a/nova/network/linux_net.py b/nova/network/linux_net.py
+index ecf3c4c..05bb5e2 100644
+--- a/nova/network/linux_net.py
++++ b/nova/network/linux_net.py
+@@ -640,7 +640,7 @@ def init_host(ip_range=None):
+     if not ip_range:
+         ip_range = CONF.fixed_range
+ 
+-    add_snat_rule(ip_range)
++    #add_snat_rule(ip_range)
+ 
+     rules = []
+     for snat_range in CONF.force_snat_range:
+diff --git a/nova/tests/network/test_manager.py b/nova/tests/network/test_manager.py
+index f6c5bf1..d1ed557 100644
+--- a/nova/tests/network/test_manager.py
++++ b/nova/tests/network/test_manager.py
+@@ -1700,12 +1700,7 @@ class CommonNetworkTestCase(test.TestCase):
+                                        table_name='nat')
+ 
+         # The expected rules that should be configured based on the fixed_range
+-        expected_lines = ['[0:0] -A %s-snat -s %s -d 0.0.0.0/0 '
+-                          '-j SNAT --to-source %s -o %s'
+-                          % (binary_name, CONF.fixed_range,
+-                                          CONF.routing_source_ip,
+-                                          CONF.public_interface),
+-                          '[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
++        expected_lines = ['[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
+                           % (binary_name, CONF.fixed_range,
+                                           CONF.metadata_host),
+                           '[0:0] -A %s-POSTROUTING -s %s -d %s -j ACCEPT'
+@@ -1749,12 +1744,7 @@ class CommonNetworkTestCase(test.TestCase):
+                                        table_name='nat')
+ 
+         # The expected rules that should be configured based on the fixed_range
+-        expected_lines = ['[0:0] -A %s-snat -s %s -d 0.0.0.0/0 '
+-                          '-j SNAT --to-source %s -o %s'
+-                          % (binary_name, networks[0]['cidr'],
+-                                          CONF.routing_source_ip,
+-                                          CONF.public_interface),
+-                          '[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
++        expected_lines = ['[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
+                           % (binary_name, networks[0]['cidr'],
+                                           CONF.metadata_host),
+                           '[0:0] -A %s-POSTROUTING -s %s -d %s -j ACCEPT'
+@@ -1764,11 +1754,6 @@ class CommonNetworkTestCase(test.TestCase):
+                           '--ctstate DNAT -j ACCEPT' % (binary_name,
+                                                         networks[0]['cidr'],
+                                                         networks[0]['cidr']),
+-                          '[0:0] -A %s-snat -s %s -d 0.0.0.0/0 '
+-                          '-j SNAT --to-source %s -o %s'
+-                          % (binary_name, networks[1]['cidr'],
+-                                          CONF.routing_source_ip,
+-                                          CONF.public_interface),
+                           '[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
+                           % (binary_name, networks[1]['cidr'],
+                                           CONF.metadata_host),
+@@ -1819,12 +1804,7 @@ class CommonNetworkTestCase(test.TestCase):
+                                        table_name='nat')
+ 
+         # Add the new expected rules to the old ones
+-        expected_lines += ['[0:0] -A %s-snat -s %s -d 0.0.0.0/0 '
+-                           '-j SNAT --to-source %s -o %s'
+-                           % (binary_name, new_network['cidr'],
+-                                           CONF.routing_source_ip,
+-                                           CONF.public_interface),
+-                           '[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
++        expected_lines += ['[0:0] -A %s-POSTROUTING -s %s -d %s/32 -j ACCEPT'
+                            % (binary_name, new_network['cidr'],
+                                            CONF.metadata_host),
+                            '[0:0] -A %s-POSTROUTING -s %s -d %s -j ACCEPT'

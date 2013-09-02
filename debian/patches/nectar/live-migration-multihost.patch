@@ -1,0 +1,16 @@
+diff --git a/nova/virt/firewall.py b/nova/virt/firewall.py
+index b61b57c..28c9dfb 100644
+--- a/nova/virt/firewall.py
++++ b/nova/virt/firewall.py
+@@ -281,8 +281,9 @@ class IptablesFirewallDriver(FirewallDriver):
+         # make sure this is legacy nw_info
+         network_info = self._handle_network_info_model(network_info)
+ 
+-        dhcp_servers = [info['dhcp_server'] for (_n, info) in network_info]
+-
++        #dhcp_servers = [info['dhcp_server'] for (_n, info) in network_info]
++        # NeCTAR HACK to fix lp:1092347
++        dhcp_servers = [CONF.my_ip]
+         for dhcp_server in dhcp_servers:
+             if dhcp_server:
+                 ipv4_rules.append('-s %s -p udp --sport 67 --dport 68 '
