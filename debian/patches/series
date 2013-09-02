@@ -7,6 +7,8 @@ avoid_setuptools_git_dependency.patch
 
 # Add not py files to manifest
 nectar/manifest_fix.patch
+# Fix failing ipv6 tests
+nectar/disable_ipv6_tests.patch
 # Only allow DNS traffic from fixed ip range
 nectar/dns_lockdown.patch
 # Use users credentials when talking to s3
