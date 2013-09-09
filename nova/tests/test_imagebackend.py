@@ -153,8 +153,8 @@ class _ImageTestCase(object):
     def test_prealloc_image_without_write_access(self):
         CONF.set_override('preallocate_images', 'space')
 
-        fake_processutils.fake_execute_clear_log()
-        fake_processutils.stub_out_processutils_execute(self.stubs)
+        fake_utils.fake_execute_clear_log()
+        fake_utils.stub_out_utils_execute(self.stubs)
         image = self.image_class(self.INSTANCE, self.NAME)
 
         def fake_fetch(target, *args, **kwargs):
@@ -166,7 +166,7 @@ class _ImageTestCase(object):
         # Testing fallocate is only called when user has write access.
         image.cache(fake_fetch, self.TEMPLATE_PATH, self.SIZE)
 
-        self.assertEqual(fake_processutils.fake_execute_get_log(), [])
+        self.assertEqual(fake_utils.fake_execute_get_log(), [])
 
 
 class RawTestCase(_ImageTestCase, test.TestCase):
