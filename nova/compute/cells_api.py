@@ -157,6 +157,21 @@ class ComputeCellsAPI(compute_api.API):
         """
         return
 
+    def _get_instances_by_filters(self, context, filters,
+                                  sort_key, sort_dir,
+                                  limit=None,
+                                  marker=None):
+        if 'ip' in filters:
+            filters['access_ip_v4'] = filters['ip']
+        if 'ip6' in filters:
+            filters['access_ip_v6'] = filters['ip6']
+
+        fields = ['metadata', 'system_metadata', 'info_cache',
+                  'security_groups']
+        return instance_obj.InstanceList.get_by_filters(
+            context, filters=filters, sort_key=sort_key, sort_dir=sort_dir,
+            limit=limit, marker=marker, expected_attrs=fields)
+
     def create(self, *args, **kwargs):
         """We can use the base functionality, but I left this here just
         for completeness.
