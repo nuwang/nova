@@ -225,6 +225,62 @@ class CellsComputeAPITestCase(test_compute.ComputeAPITestCase):
         # one targeted message should have been created
         self.assertEqual(1, mock_msg.call_count)
 
+    def test_get_all_by_multiple_options_at_once(self):
+        # Test searching by multiple options at once.
+        c = context.get_admin_context()
+
+        instance1 = self._create_fake_instance({
+            'display_name': 'woot',
+            'id': 1,
+            'uuid': '00000000-0000-0000-0000-000000000010',
+            'access_ip_v4': '172.16.0.1',
+            'access_ip_v6': '2001:db8:1269:3401::'})
+        instance2 = self._create_fake_instance({
+            'display_name': 'woo',
+            'id': 20,
+            'uuid': '00000000-0000-0000-0000-000000000020',
+            'access_ip_v4': '173.16.0.2',
+            'access_ip_v6': '2001:db8:1269:3421::'})
+        instance3 = self._create_fake_instance({
+            'display_name': 'not-woot',
+            'id': 30,
+            'uuid': '00000000-0000-0000-0000-000000000030',
+            'access_ip_v4': '173.16.0.2',
+            'access_ip_v6': '2001:db8:1269:3431::'})
+
+        # ip ends up matching 2nd octet here.. so all 3 match ip
+        # but 'name' only matches one
+        instances = self.compute_api.get_all(c,
+                search_opts={'ip': '.*\.1', 'name': 'not.*'})
+        self.assertEqual(len(instances), 1)
+        self.assertEqual(instances[0]['uuid'], instance3['uuid'])
+
+        # ip ends up matching any ip with a '1' in the last octet..
+        # so instance 1 and 3.. but name should only match #1
+        # but 'name' only matches one
+        instances = self.compute_api.get_all(c,
+                search_opts={'ip': '.*\.1$', 'name': '^woo.*'})
+        self.assertEqual(len(instances), 1)
+        self.assertEqual(instances[0]['uuid'], instance1['uuid'])
+
+        # same as above but no match on name (name matches instance1
+        # but the ip query doesn't
+        instances = self.compute_api.get_all(c,
+                search_opts={'ip': '.*\.2$', 'name': '^woot.*'})
+        self.assertEqual(len(instances), 0)
+
+        # ip matches all 3... ipv6 matches #2+#3...name matches #3
+        instances = self.compute_api.get_all(c,
+                search_opts={'ip': '.*\.1',
+                             'name': 'not.*',
+                             'ip6': '^.*12.*34.*'})
+        self.assertEqual(len(instances), 1)
+        self.assertEqual(instances[0]['uuid'], instance3['uuid'])
+
+        db.instance_destroy(c, instance1['uuid'])
+        db.instance_destroy(c, instance2['uuid'])
+        db.instance_destroy(c, instance3['uuid'])
+
 
 class CellsComputePolicyTestCase(test_compute.ComputePolicyTestCase):
     def setUp(self):
