@@ -1,5 +1,3 @@
-from oslo.config import cfg
-
 from nova.cells import filters
 from nova.openstack.common import log as logging
 from nova.availability_zones import get_availability_zones
