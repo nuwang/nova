@@ -23,7 +23,7 @@ nectar/live-migration-multihost.patch
 backports/ec2-tags.patch
 
 # Fix block migration (lp bug numbers)
-backports/1193359.patch
+#backports/1193359.patch
 
 # Lower LOG level for some stuff
 nectar/lower-log-level.patch
