@@ -30,10 +30,10 @@ these objects be simple dictionaries.
 from oslo.config import cfg
 
 from nova.cells import rpcapi as cells_rpcapi
-from nova.utils import metadata_to_dict
 from nova.openstack.common.db import api as db_api
 from nova.openstack.common.gettextutils import _
 from nova.openstack.common import log as logging
+from nova import utils
 
 
 db_opts = [
@@ -708,7 +708,8 @@ def instance_get_all_hung_in_rebooting(context, reboot_window):
 
 def _create_instance_extra_metadata(context, instance):
     meta = {}
-    system_metadata = metadata_to_dict(instance.get('system_metadata', []))
+    system_metadata = utils.metadata_to_dict(
+        instance.get('system_metadata', []))
 
     if 'instance_name' not in system_metadata:
         meta['instance_name'] = instance['name']
