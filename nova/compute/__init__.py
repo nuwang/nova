@@ -51,8 +51,7 @@ def HostAPI(*args, **kwargs):
 
 
 def AggregateAPI(*args, **kwargs):
-    """
-    Returns the 'AggregateAPI' class from the same module as the configured
+    """Returns the 'AggregateAPI' class from the same module as the configured
     compute api
     """
     importutils = nova.openstack.common.importutils

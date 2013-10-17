@@ -350,6 +350,17 @@ class CellsAPI(object):
                           console_port=console_port,
                           console_type=console_type)
 
+    def authorize_console(self, ctxt, cell_name, token, console_type, host,
+                          port, internal_access_path, instance_uuid=None):
+        # The remote side doesn't return anything, but we want to block
+        # until it completes.
+        cctxt = self.client.prepare(version='1.6.1')
+        return cctxt.call(ctxt, 'authorize_console', cell_name=cell_name,
+                              token=token, console_type=console_type,
+                              host=host, port=port,
+                              internal_access_path=internal_access_path,
+                              instance_uuid=instance_uuid)
+
     def get_capacities(self, ctxt, cell_name=None):
         cctxt = self.client.prepare(version='1.9')
         return cctxt.call(ctxt, 'get_capacities', cell_name=cell_name)
