@@ -3285,6 +3285,15 @@ class LibvirtDriver(driver.ComputeDriver):
                 libvirt_utils.create_image(info['type'], instance_disk,
                                            info['disk_size'])
             elif info['backing_file']:
+                if base == 'disk.local':
+                    target = os.path.join(CONF.instances_path,
+                                          CONF.base_dir_name,
+                                          info['backing_file'])
+                    if not os.path.exists(target):
+                        size = info['virt_disk_size'] / 1024 / 1024 / 1024
+                        fs_label='ephemeral0'
+                        os_type=instance["os_type"]
+                        self._create_ephemeral(target, size, fs_label, os_type)
                 # Creating backing file follows same way as spawning instances.
                 cache_name = os.path.basename(info['backing_file'])
 
