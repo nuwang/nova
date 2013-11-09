@@ -123,9 +123,6 @@ class CellsAPI(rpcclient.RpcProxy):
                                 method_info=method_info,
                                 call=True)
 
-<<<<<<< HEAD
-    # NOTE(alaski): Deprecated and should be removed later.
-=======
     def cast_securitygroup_api_method(self, ctxt, cell_name, method,
             *args, **kwargs):
         """Make a cast to a securitygroup API method in a certain cell."""
@@ -137,7 +134,7 @@ class CellsAPI(rpcclient.RpcProxy):
                                       method_info=method_info,
                                       call=False))
 
->>>>>>> 47eda08... Cells: Event-based secgroup/rule/assoc syncing
+    # NOTE(alaski): Deprecated and should be removed later.
     def schedule_run_instance(self, ctxt, **kwargs):
         """Schedule a new instance for creation."""
         self.client.cast(ctxt, 'schedule_run_instance',
