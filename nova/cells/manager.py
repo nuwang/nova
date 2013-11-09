@@ -559,6 +559,7 @@ class CellsManager(manager.Manager):
 
     def _response_to_aggregate(self, response):
         aggregate = response.value_or_raise()
+        cells_utils.add_cell_to_aggregate(aggregate, response.cell_name)
         return aggregate
 
     def create_aggregate(self, ctxt, cell_name,
@@ -579,6 +580,8 @@ class CellsManager(manager.Manager):
         for response in responses:
             aggregates = response.value_or_raise()
             for aggregate in aggregates:
+                cells_utils.add_cell_to_aggregate(
+                    aggregate, response.cell_name)
                 result.append(aggregate)
         return result
 
@@ -596,6 +599,7 @@ class CellsManager(manager.Manager):
     def delete_aggregate(self, ctxt, cell_name, aggregate_id):
         response = self.msg_runner.delete_aggregate(
             ctxt, cell_name, aggregate_id)
+        response.value_or_raise()
 
     def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
         response = self.msg_runner.add_host_to_aggregate(
