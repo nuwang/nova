@@ -713,3 +713,30 @@ class CellsAPI(rpcclient.RpcProxy):
                                       instance_uuid=instance_uuid,
                                       group_id=security_group_id),
                   version='1.24.2')
+
+    def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
+        """Broadcast EC2 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('ec2_instance_create',
+                                      instance_uuid=instance_uuid,
+                                      ec2_id=ec2_id),
+                  version='1.24.3')
+
+    def s3_image_create(self, ctxt, image_uuid, s3_id):
+        """Broadcast S3 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('s3_image_create',
+                                      image_uuid=image_uuid,
+                                      s3_id=s3_id),
+                  version='1.24.3')
+
+    def ec2_volume_create(self, ctxt, volume_uuid, ec2_id):
+        """Broadcast EC2 mappings downwards."""
+        if not CONF.cells.enable:
+            return
+        self.cast(ctxt, self.make_msg('ec2_volume_create',
+                                      volume_uuid=volume_uuid,
+                                      ec2_id=ec2_id),
+                  version='1.24.3')

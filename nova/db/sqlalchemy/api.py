@@ -173,6 +173,83 @@ def _retry_on_deadlock(f):
     return wrapped
 
 
+def _model_get_query(context, model, session=None):
+    return model_query(context,
+                       model,
+                       session=session,
+                       read_deleted='yes')
+
+
+def _id_mapping_model_create_or_update(context, model, uuid, id=None):
+    """Create or update model id mapping to provided uuid."""
+    session = get_session()
+    if id is not None:
+        rows_deleted = _model_get_query(context, model, session=session).\
+                           filter(and_(model.uuid != uuid, model.id == id)).\
+                           delete()
+        if rows_deleted:
+            LOG.warn("Deleted out of sync %(model)s: ID %(id)s.",
+                     {'id': id, 'model': model.__name__})
+
+    # FIXME(kspear): should probably be setting read_deleted='no' here?
+    ref = _model_get_query(context, model, session=session).\
+              filter_by(uuid=uuid).\
+              first()
+
+    if not ref:
+        ref = model()
+    elif ref['id'] == id:
+        return ref
+
+    ref.update({'uuid': uuid})
+    if id is not None:
+        ref.update({'id': id})
+
+    ref.save(session=session)
+    return ref
+
+
+def _id_mapping_get_all_by_filters(context, model, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+
+    sort_fn = {'desc': desc, 'asc': asc}
+    session = get_session()
+    query_prefix = session.query(model).\
+            order_by(sort_fn[sort_dir](getattr(model, sort_key)))
+
+    # Make a copy of the filters dictionary to use going forward, as we'll
+    # be modifying it and we shouldn't affect the caller's use of it.
+    filters = filters.copy()
+
+    if 'changes-since' in filters:
+        changes_since = timeutils.normalize_time(filters['changes-since'])
+        query_prefix = query_prefix.\
+                            filter(model.updated_at > changes_since)
+
+    if 'deleted' in filters:
+        if filters.pop('deleted'):
+            query_prefix = query_prefix.filter(model.deleted == model.id)
+        else:
+            query_prefix = query_prefix.filter_by(deleted=0)
+
+    if not context.is_admin:
+        # If we're not admin context, add appropriate filter..
+        if context.project_id:
+            filters['project_id'] = context.project_id
+        else:
+            filters['user_id'] = context.user_id
+
+    # Filters for exact matches that we can do along with the SQL query...
+    # For other filters that don't match this, we will do regexp matching
+    exact_match_filter_names = ['id', 'uuid']
+
+    # Filter the query
+    query_prefix = exact_filter(query_prefix, model,
+                                filters, exact_match_filter_names)
+    query_prefix = regex_filter(query_prefix, model, filters)
+    return query_prefix.all()
+
+
 def model_query(context, model, *args, **kwargs):
     """Query helper that accounts for context's `read_deleted` field.
 
@@ -1622,7 +1699,7 @@ def instance_create(context, values):
         session.add(instance_ref)
 
     # create the instance uuid to ec2_id mapping entry for instance
-    ec2_instance_create(context, instance_ref['uuid'])
+    db.ec2_instance_create(context, instance_ref['uuid'])
 
     return instance_ref
 
@@ -3383,14 +3460,16 @@ def _ec2_snapshot_get_query(context, session=None):
 @require_context
 def ec2_volume_create(context, volume_uuid, id=None):
     """Create ec2 compatible volume by provided uuid."""
-    ec2_volume_ref = models.VolumeIdMapping()
-    ec2_volume_ref.update({'uuid': volume_uuid})
-    if id is not None:
-        ec2_volume_ref.update({'id': id})
+    return _id_mapping_model_create_or_update(context,
+                                              models.VolumeIdMapping,
+                                              volume_uuid, id=id)
 
-    ec2_volume_ref.save()
 
-    return ec2_volume_ref
+@require_context
+def ec2_volume_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.VolumeIdMapping,
+                                          filters, sort_key, sort_dir)
 
 
 @require_context
@@ -5008,16 +5087,17 @@ def s3_image_get_by_uuid(context, image_uuid):
     return result
 
 
-def s3_image_create(context, image_uuid):
+def s3_image_create(context, image_uuid, id=None):
     """Create local s3 image represented by provided uuid."""
-    try:
-        s3_image_ref = models.S3Image()
-        s3_image_ref.update({'uuid': image_uuid})
-        s3_image_ref.save()
-    except Exception as e:
-        raise db_exc.DBError(e)
+    return _id_mapping_model_create_or_update(context, models.S3Image,
+                                              image_uuid, id=id)
 
-    return s3_image_ref
+
+@require_context
+def s3_image_get_all_by_filters(context, filters, sort_key, sort_dir,
+                                limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.S3Image,
+                                          filters, sort_key, sort_dir)
 
 
 ####################
@@ -5484,15 +5564,16 @@ def action_event_get_by_id(context, action_id, event_id):
 
 @require_context
 def ec2_instance_create(context, instance_uuid, id=None):
-    """Create ec2 compatible instance by provided uuid."""
-    ec2_instance_ref = models.InstanceIdMapping()
-    ec2_instance_ref.update({'uuid': instance_uuid})
-    if id is not None:
-        ec2_instance_ref.update({'id': id})
+    """Create ec2 compatable instance by provided uuid"""
+    return _id_mapping_model_create_or_update(context,
+                                              models.InstanceIdMapping,
+                                              instance_uuid, id=id)
 
-    ec2_instance_ref.save()
 
-    return ec2_instance_ref
+def ec2_instance_get_all_by_filters(context, filters, sort_key, sort_dir,
+        limit=None, marker=None):
+    return _id_mapping_get_all_by_filters(context, models.InstanceIdMapping,
+                                          filters, sort_key, sort_dir)
 
 
 @require_context

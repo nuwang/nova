@@ -85,7 +85,13 @@ class CellsManager(manager.Manager):
             'security groups': consistency.GroupConsistencyHandler(self.db),
             'rules': consistency.RuleConsistencyHandler(self.db),
             'instance associations':
-                consistency.InstanceAssociationConsistencyHandler(self.db)
+                consistency.InstanceAssociationConsistencyHandler(self.db),
+            'instance id mappings':
+                consistency.InstanceIDMappingConsistencyHandler(self.db),
+            'image id mappings':
+                consistency.S3ImageConsistencyHandler(self.db),
+            'volume id mappings':
+                consistency.VolumeIDMappingConsistencyHandler(self.db),
         }
 
     def post_start_hook(self):
@@ -629,6 +635,15 @@ class CellsManager(manager.Manager):
         self.msg_runner.instance_remove_security_group(ctxt,
                 instance_uuid, group_p)
 
+    def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
+        self.msg_runner.ec2_instance_create(ctxt, instance_uuid, ec2_id)
+
+    def s3_image_create(self, ctxt, image_uuid, s3_id):
+        self.msg_runner.s3_image_create(ctxt, image_uuid, s3_id)
+
+    def ec2_volume_create(self, ctxt, volume_uuid, ec2_id):
+        self.msg_runner.ec2_volume_create(ctxt, volume_uuid, ec2_id)
+
     def _heal_resource(self, ctxt, resource_name, from_top=True):
         if from_top and self.state_manager.get_parent_cells():
             return
@@ -648,3 +663,15 @@ class CellsManager(manager.Manager):
     @periodic_task.periodic_task
     def _heal_instance_associations(self, ctxt):
         self._heal_resource(ctxt, 'instance associations', from_top=False)
+
+    @periodic_task.periodic_task
+    def _heal_instance_id_mappings(self, ctxt):
+        self._heal_resource(ctxt, 'instance id mappings')
+
+    @periodic_task.periodic_task
+    def _heal_s3_images(self, ctxt):
+        self._heal_resource(ctxt, 'image id mappings')
+
+    @periodic_task.periodic_task
+    def _heal_volume_id_mappings(self, ctxt):
+        self._heal_resource(ctxt, 'volume id mappings')
