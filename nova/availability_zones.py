@@ -114,23 +114,31 @@ def get_availability_zones(context, get_only_available=False, cells_api=False):
            available zones only
     """
     # Override for cells
-    # FIXME(kspear): ignores get_only_available
     if cells_api:
-        cells_rpcapi = cell_rpcapi.CellsAPI()
-        cell_info = cells_rpcapi.get_cell_info_for_neighbors(context)
-        global_azs = []
-        mute_azs = []
-        secs = CONF.cells.mute_child_interval
-        for cell in cell_info:
-            last_seen = cell['last_seen']
-            if 'availability_zones' not in cell['capabilities']:
-                continue
-            if last_seen and timeutils.is_older_than(last_seen, secs):
-                mute_azs.extend(cell['capabilities']['availability_zones'])
-            else:
-                global_azs.extend(cell['capabilities']['availability_zones'])
-        available_zones = list(set(global_azs))
-        unavailable_zones = list(set(mute_azs))
+        cache = _get_cache()
+        available_zones = cache.get('az-availabile-list')
+        unavailable_zones = cache.get('az-unavailabile-list')
+
+        if not available_zones:
+            cells_rpcapi = cell_rpcapi.CellsAPI()
+            cell_info = cells_rpcapi.get_cell_info_for_neighbors(context)
+            global_azs = []
+            mute_azs = []
+            secs = CONF.cells.mute_child_interval
+            for cell in cell_info:
+                last_seen = cell['last_seen']
+                if 'availability_zones' not in cell['capabilities']:
+                    continue
+                if last_seen and timeutils.is_older_than(last_seen, secs):
+                    mute_azs.extend(cell['capabilities']['availability_zones'])
+                else:
+                    global_azs.extend(cell['capabilities']['availability_zones'])
+                available_zones = list(set(global_azs))
+                unavailable_zones = list(set(mute_azs))
+                cache.set('az-availabile-list', available_zones, 300)
+                cache.set('az-unavailabile-list', unavailable_zones, 300)
+        if get_only_available:
+            return available_zones
         return (available_zones, unavailable_zones)
 
     enabled_services = db.service_get_all(context, False)
