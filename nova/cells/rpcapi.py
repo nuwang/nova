@@ -582,13 +582,6 @@ class CellsAPI(rpcclient.RpcProxy):
                    backup_type=backup_type,
                    rotation=rotation)
 
-        return self.call(ctxt,
-                self.make_msg('validate_console_port',
-                              instance_uuid=instance_uuid,
-                              console_port=console_port,
-                              console_type=console_type),
-                version='1.6')
-
     def create_aggregate(self, ctxt, cell_name,
                          aggregate_name, availability_zone):
         return self.call(ctxt,
