@@ -24,6 +24,7 @@ from nova.compute import rpcapi as compute_rpcapi
 from nova import exception
 from nova.objects import base as obj_base
 from nova.objects import service as service_obj
+from nova.objects import instance as instance_obj
 from nova.openstack.common import excutils
 from nova import rpcclient
 
