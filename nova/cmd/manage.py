@@ -308,7 +308,7 @@ class ProjectCommands(object):
         groups = db.security_group_get_by_project(admin_context, project_id)
         for group in groups:
             for rule in group.rules:
-                print "Sync %s - %s" % (group.name, rule)
+                print("Sync %s - %s" % (group.name, rule))
                 cells_rpcapi.security_group_rule_create(admin_context, group, rule)
 
 
