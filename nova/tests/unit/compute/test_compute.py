@@ -7704,6 +7704,7 @@ class ComputeAPITestCase(BaseTestCase):
                 'image_ramdisk_id': 'old_data',
                 'image_something_else': 'old-data',
                 'image_should_remove': 'bye-bye',
+                'instance_name': u'instance-00000001',
                 'preserved': 'preserve this!'})
 
         instance.save()
@@ -7739,6 +7740,7 @@ class ComputeAPITestCase(BaseTestCase):
                 'image_min_disk': '1',
                 'image_ramdisk_id': 'fake_ramdisk_id',
                 'image_something_else': 'meow',
+                'instance_name': u'instance-00000001',
                 'preserved': 'preserve this!'})
 
     def test_rebuild(self):
