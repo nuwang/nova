@@ -672,29 +672,9 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         """Parent cell told us to schedule new instance creation."""
         self.msg_runner.scheduler.build_instances(message, build_inst_kwargs)
 
-    def _instance_get_by_uuid(self, ctxt, instance_uuid):
-        try:
-            instance = self.db.instance_get_by_uuid(ctxt, instance_uuid)
-        except exception.InstanceNotFound:
-            with excutils.save_and_reraise_exception():
-                # Must be a race condition.  Let's try to resolve it by
-                # telling the top level cells that this instance doesn't
-                # exist.
-                instance = {'uuid': instance_uuid}
-                self.msg_runner.instance_destroy_at_top(ctxt, instance)
-        # FIXME(comstud): This is temporary/transitional until I can
-        # work out a better way to pass full objects down.
-        EXPECTS_OBJECTS = ['start', 'stop']
-        if method in EXPECTS_OBJECTS:
-            inst_obj = instance_obj.Instance()
-            inst_obj._from_db_object(ctxt, inst_obj, instance)
-            instance = inst_obj
-        return instance
-
-    def run_compute_api_method(self, message, method_info):
+    def _run_api_method(self, message, method_info, fn):
         """Run a method in the compute api class."""
         method = method_info['method']
-        fn = getattr(self.compute_api, method, None)
         if not fn:
             detail = _("Unknown method '%(method)s' in compute API")
             raise exception.CellServiceAPIMethodNotFound(
@@ -703,25 +683,38 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         # 1st arg is instance_uuid that we need to turn into the
         # instance object.
         instance_uuid = args[0]
-        instance = self._instance_get_by_uuid(message.ctxt, instance_uuid)
+        try:
+            instance = self.db.instance_get_by_uuid(message.ctxt,
+                                                    instance_uuid)
+        except exception.InstanceNotFound:
+            with excutils.save_and_reraise_exception():
+                # Must be a race condition.  Let's try to resolve it by
+                # telling the top level cells that this instance doesn't
+                # exist.
+                instance = {'uuid': instance_uuid}
+                self.msg_runner.instance_destroy_at_top(message.ctxt,
+                                                        instance)
+        # FIXME(comstud): This is temporary/transitional until I can
+        # work out a better way to pass full objects down.
+        EXPECTS_OBJECTS = ['start', 'stop']
+        if method in EXPECTS_OBJECTS:
+            inst_obj = instance_obj.Instance()
+            inst_obj._from_db_object(message.ctxt, inst_obj, instance)
+            instance = inst_obj
         args[0] = instance
         return fn(message.ctxt, *args, **method_info['method_kwargs'])
+
+    def run_compute_api_method(self, message, method_info):
+        """Run a method in the compute api class."""
+        method = method_info['method']
+        fn = getattr(self.compute_api, method, None)
+        return self._run_api_method(message, method_info, fn)
 
     def run_securitygroup_api_method(self, message, method_info):
         """Run a method in the securitygroup api class."""
         method = method_info['method']
         fn = getattr(self.securitygroup_api, method, None)
-        if not fn:
-            detail = _("Unknown method '%(method)s' in securitygroup API")
-            raise exception.CellServiceAPIMethodNotFound(
-                    detail=detail % locals())
-        args = list(method_info['method_args'])
-        # 1st arg is instance_uuid that we need to turn into the
-        # instance object.
-        instance_uuid = args[0]
-        instance = self._instance_get_by_uuid(message.ctxt, instance_uuid)
-        args[0] = instance
-        return fn(message.ctxt, *args, **method_info['method_kwargs'])
+        return self._run_api_method(message, method_info, fn)
 
     def update_capabilities(self, message, cell_name, capabilities):
         """A child cell told us about their capabilities."""
