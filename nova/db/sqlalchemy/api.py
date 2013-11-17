@@ -4961,7 +4961,6 @@ def aggregate_get_by_host(context, host, key=None):
     return query.all()
 
 
-@require_admin_context
 def aggregate_metadata_get_by_host(context, host, key=None):
     query = model_query(context, models.Aggregate)
     query = query.join("_hosts")
