@@ -1467,7 +1467,7 @@ class InstanceTestCase(test.TestCase, ModelsObjectComparatorMixin):
     def test_instance_update(self):
         instance = self.create_instance_with_args()
         metadata = {'host': 'bar', 'key2': 'wuff'}
-        system_metadata = {'original_image_ref': 'baz'}
+        system_metadata = {'instance_name': 'instance-00000001', 'original_image_ref': 'baz'}
         # Update the metadata
         db.instance_update(self.ctxt, instance['uuid'], {'metadata': metadata,
                            'system_metadata': system_metadata})
