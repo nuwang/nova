@@ -79,7 +79,7 @@ class CellsSchedulerTestCase(test.TestCase):
         self.instances = [{'uuid': uuid} for uuid in instance_uuids]
         self.request_spec = {
                 'instance_uuids': instance_uuids,
-                'instance_properties': 'fake_properties',
+                'instance_properties': {'fake_properties': 'fake'},
                 'instance_type': 'fake_type',
                 'image': 'fake_image',
                 'security_group': 'fake_sec_groups',

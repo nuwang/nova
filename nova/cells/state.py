@@ -25,6 +25,7 @@ from oslo.config import cfg
 from nova.cells import rpc_driver
 from nova import context
 from nova.db import base
+from nova.availability_zones import get_availability_zones
 from nova import exception
 from nova.openstack.common import fileutils
 from nova.openstack.common.gettextutils import _
@@ -59,7 +60,7 @@ class CellState(object):
     def __init__(self, cell_name, is_me=False):
         self.name = cell_name
         self.is_me = is_me
-        self.last_seen = datetime.datetime.min
+        self.last_seen = timeutils.utcnow()
         self.capabilities = {}
         self.capacities = {}
         self.db_info = {}
@@ -101,6 +102,7 @@ class CellState(object):
                 self.db_info['transport_url'])
             for field, canonical in url_fields_to_return.items():
                 cell_info[canonical] = url_info[field]
+        cell_info['last_seen'] = self.last_seen
         return cell_info
 
     def send_message(self, message):
@@ -176,6 +178,10 @@ class CellStateManager(base.Base):
             else:
                 values = set([value])
             my_cell_capabs[name] = values
+        ctxt = context.get_admin_context()
+        active, disabled = get_availability_zones(ctxt)
+        # Only send up available AZs
+        my_cell_capabs['availability_zones'] = set(active)
         self.my_cell_state.update_capabilities(my_cell_capabs)
 
     def _refresh_cells_from_dict(self, db_cells_dict):
