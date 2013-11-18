@@ -644,8 +644,9 @@ class API(base.Base):
         strategy being performed.
         """
         if availability_zone:
+
             available_zones = availability_zones.\
-                get_availability_zones(context.elevated(), True)
+                get_availability_zones(context.elevated(), True, CONF.cells.enable)
             if forced_host is None and availability_zone not in \
                     available_zones:
                 msg = _('The requested availability zone is not available')
