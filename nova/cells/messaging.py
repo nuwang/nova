@@ -985,6 +985,9 @@ class _TargetedMessageMethods(_BaseMessageMethods):
             message.ctxt, aggregate_id, host_name)
         return jsonutils.to_primitive(response)
 
+    def flavor_create(self, message, values):
+        return self.db.flavor_create(message.ctxt, values)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1925,6 +1928,12 @@ class MessageRunner(object):
         message = _TargetedMessage(self, ctxt, 'remove_host_from_aggregate',
                 method_kwargs, 'down',
                 cell_name, need_response=True)
+        return message.process()
+
+    def flavor_create(self, ctxt, cell_name, values):
+        message = _TargetedMessage(self, ctxt, 'flavor_create',
+                                   dict(values=values),
+                                   'down', cell_name, need_response=True)
         return message.process()
 
     @staticmethod
