@@ -44,7 +44,7 @@ def fake_gen_uuid():
     return FAKE_UUID
 
 
-def fake_get_availability_zones(context):
+def fake_get_availability_zones(context, cells_api=None):
     return ['nova'], []
 
 

@@ -527,3 +527,9 @@ class CellsManager(manager.Manager):
         """Backup an instance in its cell."""
         self.msg_runner.backup_instance(ctxt, instance, image_id,
                                         backup_type, rotation)
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+
+        response = self.msg_runner.get_host_availability_zone(ctxt,
+                                        cell_name, host)
+        return response.value_or_raise()

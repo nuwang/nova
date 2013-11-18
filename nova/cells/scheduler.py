@@ -133,6 +133,24 @@ class CellsScheduler(base.Base):
 
     def _grab_target_cells(self, filter_properties):
         cells = self._get_possible_cells()
+
+        if self.state_manager.get_child_cells():
+            request_spec = filter_properties.get('request_spec', {})
+            props = request_spec.get('instance_properties', {})
+            availability_zone = props.get('availability_zone', None)
+            scheduler_hints = filter_properties.get('scheduler_hints', {}) or {}
+
+            # Try deprecated scheduler hint
+            if not availability_zone:
+                availability_zone = scheduler_hints.get('cell', None)
+
+            our_cell = self.state_manager.get_my_state()
+            if availability_zone and availability_zone in our_cell.capabilities.get('availability_zones', []):
+                if 'availability_zone' in props:
+                    props.pop('availability_zone')
+                if 'cell' in scheduler_hints:
+                    scheduler_hints.pop('cell')
+
         cells = self.filter_handler.get_filtered_objects(self.filter_classes,
                                                          cells,
                                                          filter_properties)
