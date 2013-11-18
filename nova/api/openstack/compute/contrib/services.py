@@ -12,6 +12,7 @@
 #    License for the specific language governing permissions and limitations
 #    under the License.
 
+from oslo_config import cfg
 import webob.exc
 
 from nova.api.openstack import extensions
@@ -22,6 +23,10 @@ from nova import exception
 from nova.i18n import _
 from nova import servicegroup
 from nova import utils
+
+CONF = cfg.CONF
+CONF.import_opt('enable', 'nova.cells.opts', group='cells')
+
 
 authorize = extensions.extension_authorizer('compute', 'services')
 
@@ -41,8 +46,12 @@ class ServiceController(object):
         # permission checks
         nova_context.require_admin_context(context)
 
+        set_zones = True
+        if CONF.cells.enable:
+            set_zones = False
+
         services = self.host_api.service_get_all(
-            context, set_zones=True)
+            context, set_zones=set_zones)
 
         host = ''
         if 'host' in req.GET:
