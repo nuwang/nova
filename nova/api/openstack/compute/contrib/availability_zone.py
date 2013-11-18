@@ -152,7 +152,9 @@ class AvailabilityZoneController(wsgi.Controller):
         """Returns a detailed list of availability zone."""
         context = req.environ['nova.context']
         authorize_detail(context)
-
+        if CONF.cells.enable:
+            #verbose doesn't work for cells
+            return self._describe_availability_zones(context)
         return self._describe_availability_zones_verbose(context)
 
 

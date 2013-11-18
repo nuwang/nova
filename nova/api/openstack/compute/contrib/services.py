@@ -81,8 +81,11 @@ class ServiceController(object):
     def _get_services(self, req):
         context = req.environ['nova.context']
         authorize(context)
+        set_zones = True
+        if CONF.cells.enable:
+            set_zones = False
         services = self.host_api.service_get_all(
-            context, set_zones=True)
+            context, set_zones=set_zones)
 
         host = ''
         if 'host' in req.GET:
