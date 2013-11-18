@@ -282,6 +282,30 @@ class CellsScheduler(base.Base):
                         # a filter took care of scheduling.  skip.
                         return
 
+                    if self.state_manager.get_child_cells():
+                        instances = method_kwargs.get('instances', [])
+                        availability_zone = [i.get('availability_zone', None)
+                                             for i in instances]
+
+                        our_azs = self.state_manager.get_my_state()\
+                            .capabilities.get('availability_zones', [])
+
+                        # Try deprecated scheduler hint
+                        if not any(availability_zone):
+                            filter_props = method_kwargs.get('scheduler_hints', {})
+                            scheduler_hints = filter_props.get('scheduler_hints', {})
+                            availability_zone = scheduler_hints.get('cell', None)
+                            cell_scheduled = scheduler_hints.pop('cell', None)
+                            if scheduler_hints and cell_scheduled in our_azs:
+                                scheduler_hints.pop('cell')
+
+                        # If the instance is scheduled for our cell,
+                        # then remove the AZ from the instance.
+                        for instance in instances:
+                            az = instance.get('availability_zone', None)
+                            if az in our_azs:
+                                instance.pop('availability_zone')
+
                     return method(message, target_cells, instance_uuids,
                             method_kwargs)
                 except exception.NoCellsAvailable:

@@ -40,7 +40,7 @@ from nova.openstack.common import log as logging
 from nova.openstack.common import timeutils
 from nova import utils
 from nova.virt import netutils
-
+from nova import availability_zones
 
 metadata_opts = [
     cfg.StrOpt('config_drive_skip_versions',
