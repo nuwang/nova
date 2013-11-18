@@ -38,7 +38,7 @@ from nova.openstack.common import log as logging
 from nova.openstack.common import timeutils
 from nova import utils
 from nova.virt import netutils
-
+from nova import availability_zones
 
 metadata_opts = [
     cfg.StrOpt('config_drive_skip_versions',
@@ -119,8 +119,7 @@ class InstanceMetadata():
 
         ctxt = context.get_admin_context()
 
-        self.availability_zone = ec2utils.get_availability_zone_by_host(
-                instance['host'], capi)
+        self.availability_zone = availability_zones.get_instance_availability_zone(ctxt, instance)
 
         self.ip_info = ec2utils.get_ip_info_for_instance(ctxt, instance)
 

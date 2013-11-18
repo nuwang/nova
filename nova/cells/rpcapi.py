@@ -566,3 +566,68 @@ class CellsAPI(rpcclient.RpcProxy):
                    image_id=image_id,
                    backup_type=backup_type,
                    rotation=rotation)
+
+    def get_host_availability_zone(self, ctxt, cell_name, host):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'get_host_availability_zone',
+                          cell_name=cell_name,
+                          host=host)
+
+    def flavor_create(self, ctxt, cell_name, values):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'flavor_create',
+                          cell_name=cell_name,
+                          values=values)
+
+    def create_aggregate(self, ctxt, cell_name,
+                         aggregate_name, availability_zone):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'create_aggregate',
+                          cell_name=cell_name,
+                          aggregate_name=aggregate_name,
+                          availability_zone=availability_zone)
+
+    def get_aggregate(self, ctxt, cell_name, aggregate_id):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'get_aggregate',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id)
+
+    def get_aggregate_list(self, ctxt):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'get_aggregate_list')
+
+    def update_aggregate(self, ctxt, cell_name, aggregate_id, values):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'update_aggregate',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id,
+                          values=values)
+
+    def update_aggregate_metadata(self, ctxt, cell_name,
+                                  aggregate_id, metadata):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'update_aggregate_metadata',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id,
+                          metadata=metadata)
+
+    def delete_aggregate(self, ctxt, cell_name, aggregate_id):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'delete_aggregate',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id)
+
+    def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'add_host_to_aggregate',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id, host_name=host_name)
+
+    def remove_host_from_aggregate(self, ctxt, cell_name,
+                                  aggregate_id, host_name):
+        cctxt = self.client.prepare(version='1.24.1')
+        return cctxt.call(ctxt, 'remove_host_from_aggregate',
+                          cell_name=cell_name,
+                          aggregate_id=aggregate_id,
+                          host_name=host_name)
