@@ -329,7 +329,7 @@ class CellsSchedulerTestCase(test.TestCase):
 
         try:
             self.scheduler._schedule_build_to_cells(None, None, None, _test,
-                                                    None)
+                                                    {})
         except test.TestingException:
             self.fail("Scheduling did not properly short circuit")
 

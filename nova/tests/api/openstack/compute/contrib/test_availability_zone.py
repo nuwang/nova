@@ -90,7 +90,7 @@ def fake_set_availability_zones(context, services):
     return services
 
 
-def fake_get_availability_zones(context):
+def fake_get_availability_zones(context, cells_api=None):
     return ['nova'], []
 
 
