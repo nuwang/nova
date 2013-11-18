@@ -23,6 +23,7 @@ from nova.i18n import _
 from nova import servicegroup
 from nova import utils
 
+
 authorize = extensions.extension_authorizer('compute', 'services')
 
 
