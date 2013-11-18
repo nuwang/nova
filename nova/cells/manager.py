@@ -541,3 +541,7 @@ class CellsManager(manager.Manager):
         response = self.msg_runner.get_host_availability_zone(ctxt,
                                         cell_name, host)
         return response.value_or_raise()
+
+    def flavor_create(self, ctxt, cell_name, values):
+        response = self.msg_runner.flavor_create(ctxt,
+                cell_name, values)

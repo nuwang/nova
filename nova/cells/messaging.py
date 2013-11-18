@@ -937,6 +937,9 @@ class _TargetedMessageMethods(_BaseMessageMethods):
         return availability_zones.get_host_availability_zone(
             message.ctxt, host)
 
+    def flavor_create(self, message, values):
+        return self.db.flavor_create(message.ctxt, values)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1756,6 +1759,12 @@ class MessageRunner(object):
     def get_host_availability_zone(self, ctxt, cell_name, host):
         message = _TargetedMessage(self, ctxt, 'get_host_availability_zone',
                                    dict(host=host),
+                                   'down', cell_name, need_response=True)
+        return message.process()
+
+    def flavor_create(self, ctxt, cell_name, values):
+        message = _TargetedMessage(self, ctxt, 'flavor_create',
+                                   dict(values=values),
                                    'down', cell_name, need_response=True)
         return message.process()
 
