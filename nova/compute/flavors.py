@@ -24,6 +24,7 @@ import uuid
 from oslo.config import cfg
 import six
 
+from nova.cells import rpcapi as cell_rpcapi
 from nova import context
 from nova import db
 from nova import exception
@@ -86,6 +87,9 @@ system_metadata_flavor_props = {
 def create(name, memory, vcpus, root_gb, ephemeral_gb=0, flavorid=None,
            swap=0, rxtx_factor=1.0, is_public=True):
     """Creates flavors."""
+    cell = None
+    if CONF.cells.enable and '@' in name:
+        cell, name = name.split('@')
     if not flavorid:
         flavorid = uuid.uuid4()
 
@@ -161,7 +165,12 @@ def create(name, memory, vcpus, root_gb, ephemeral_gb=0, flavorid=None,
         raise exception.InvalidInput(reason=_("is_public must be a boolean"))
 
     try:
-        return db.flavor_create(context.get_admin_context(), kwargs)
+        ctxt = context.get_admin_context()
+        if cell:
+            cells_rpcapi = cell_rpcapi.CellsAPI()
+            return cells_rpcapi.flavor_create(ctxt, cell, kwargs)
+        else:
+            return db.flavor_create(ctxt, kwargs)
     except db_exc.DBError as e:
         LOG.exception(_('DB error: %s') % e)
         raise exception.FlavorCreateFailed()
