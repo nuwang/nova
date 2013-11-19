@@ -1,8 +1,8 @@
 diff --git a/nova/context.py b/nova/context.py
-index cd4428e..304e5a7 100644
+index c6aca91..d015b30 100644
 --- a/nova/context.py
 +++ b/nova/context.py
-@@ -60,7 +60,7 @@ class RequestContext(object):
+@@ -61,7 +61,7 @@ class RequestContext(object):
              because they possibly came in from older rpc messages.
          """
          if kwargs:
@@ -12,10 +12,10 @@ index cd4428e..304e5a7 100644
  
          self.user_id = user_id
 diff --git a/nova/tests/test_context.py b/nova/tests/test_context.py
-index 4639f75..679340d 100644
+index 5f2d72a..a349ee7 100644
 --- a/nova/tests/test_context.py
 +++ b/nova/tests/test_context.py
-@@ -67,7 +67,7 @@ class ContextTestCase(test.TestCase):
+@@ -67,7 +67,7 @@ class ContextTestCase(test.NoDBTestCase):
          def fake_warn(log_msg):
              info['log_msg'] = log_msg
  
@@ -24,3 +24,4 @@ index 4639f75..679340d 100644
  
          c = context.RequestContext('user', 'project',
                  extra_arg1='meow', extra_arg2='wuff')
+

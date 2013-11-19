@@ -1,6 +1,5 @@
-nova (1:2013.1.4+20130822-1) precise-grizzly; urgency=low
+nova (1:2013.2~20130822-1) precise-grizzly; urgency=low
 
-  * If AZ info exists in sys metadata use that
-  * Added scheduler filter AggregateInstanceTypes 
+  * New Release
 
- -- Sam Morrison <sorrison@gmail.com>  Thu, 22 Aug 2013 11:10:31 +1000
+ -- Russell Sim <russell.sim@gmail.com>  Tue, 19 Nov 2013 10:10:31 +1000

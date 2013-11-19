@@ -15,7 +15,7 @@ if [ "$1" = "configure" ]; then
 
     if [ -z "$2" ]; then
       # New install - blanket permissions
-      find /var/lib/nova/ -path /var/lib/nova/instances -prune -o -exec chown nova:nova {} \;
+      chown -R nova:nova /var/lib/nova/
     elif dpkg --compare-versions "$2" lt "2011.3-0ubuntu4"; then
       # make sure that LXC rootfs mount points are excleuded
       # during upgrades from previous versions
@@ -41,7 +41,7 @@ if [ "$1" = "configure" ]; then
 
     if [ -z "$2" ]; then
         # New install - blanket permissions
-	find /var/lib/nova/ -path /var/lib/nova/instances -prune -o -exec chown nova:nova {} \;
+        chown -R nova:nova /var/lib/nova/
     elif dpkg --compare-versions "$2" lt "2011.3-0ubuntu4"; then
         # Make sure the LXC rootfs mount points are excluded
         # during upgrades from previous versions

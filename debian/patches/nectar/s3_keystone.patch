@@ -1,8 +1,8 @@
 diff --git a/nova/image/s3.py b/nova/image/s3.py
-index 100d800..43cef05 100644
+index 9a63ebd..1d0f8b7 100644
 --- a/nova/image/s3.py
 +++ b/nova/image/s3.py
-@@ -64,12 +64,15 @@ s3_opts = [
+@@ -66,12 +66,15 @@ s3_opts = [
                 default=False,
                 help='whether to affix the tenant id to the access key '
                      'when downloading from s3'),
@@ -19,7 +19,7 @@ index 100d800..43cef05 100644
  
  class S3ImageService(object):
      """Wraps an existing image service to support s3 based register."""
-@@ -163,6 +166,23 @@ class S3ImageService(object):
+@@ -181,6 +184,23 @@ class S3ImageService(object):
          if CONF.s3_affix_tenant:
              access = '%s:%s' % (access, context.project_id)
          secret = CONF.s3_secret_key
