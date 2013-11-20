@@ -29,4 +29,6 @@ nectar/snat.patch
 # Lower LOG level for some stuff
 nectar/lower-log-level.patch
 
-
+# Fix manifest so it includes non py files
+# This is broken due to setuptool_git
+nectar/fix-manifest.patch
