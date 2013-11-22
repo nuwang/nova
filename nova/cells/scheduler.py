@@ -133,24 +133,6 @@ class CellsScheduler(base.Base):
 
     def _grab_target_cells(self, filter_properties):
         cells = self._get_possible_cells()
-
-        if self.state_manager.get_child_cells():
-            request_spec = filter_properties.get('request_spec', {})
-            props = request_spec.get('instance_properties', {})
-            availability_zone = props.get('availability_zone', None)
-            scheduler_hints = filter_properties.get('scheduler_hints', {}) or {}
-
-            # Try deprecated scheduler hint
-            if not availability_zone:
-                availability_zone = scheduler_hints.get('cell', None)
-
-            our_cell = self.state_manager.get_my_state()
-            if availability_zone and availability_zone in our_cell.capabilities.get('availability_zones', []):
-                if 'availability_zone' in props:
-                    props.pop('availability_zone')
-                if 'cell' in scheduler_hints:
-                    scheduler_hints.pop('cell')
-
         cells = self.filter_handler.get_filtered_objects(self.filter_classes,
                                                          cells,
                                                          filter_properties)
@@ -297,6 +279,30 @@ class CellsScheduler(base.Base):
                     if target_cells is None:
                         # a filter took care of scheduling.  skip.
                         return
+
+                    if self.state_manager.get_child_cells():
+                        instances = method_kwargs.get('instances', [])
+                        availability_zone = [i.get('availability_zone', None)
+                                             for i in instances]
+
+                        our_azs = self.state_manager.get_my_state()\
+                            .capabilities.get('availability_zones', [])
+
+                        # Try deprecated scheduler hint
+                        if not any(availability_zone):
+                            filter_props = method_kwargs.get('scheduler_hints', {})
+                            scheduler_hints = filter_props.get('scheduler_hints', {})
+                            availability_zone = scheduler_hints.get('cell', None)
+                            cell_scheduled = scheduler_hints.pop('cell', None)
+                            if scheduler_hints and cell_scheduled in our_azs:
+                                scheduler_hints.pop('cell')
+
+                        # If the instance is scheduled for our cell,
+                        # then remove the AZ from the instance.
+                        for instance in instances:
+                            az = instance.get('availability_zone', None)
+                            if az in our_azs:
+                                instance.pop('availability_zone')
 
                     return method(message, target_cells, instance_uuids,
                             method_kwargs)
