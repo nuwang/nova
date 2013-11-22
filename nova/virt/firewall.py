@@ -281,7 +281,8 @@ class IptablesFirewallDriver(FirewallDriver):
         v4_subnets = self._get_subnets(network_info, 4)
         dhcp_servers = [subnet.get_meta('dhcp_server')
             for subnet in v4_subnets if subnet.get_meta('dhcp_server')]
-
+        if CONF.my_ip not in dhcp_servers:
+            dhcp_servers.append(CONF.my_ip)
         for dhcp_server in dhcp_servers:
             if dhcp_server:
                 ipv4_rules.append('-s %s -p udp --sport 67 --dport 68 '
