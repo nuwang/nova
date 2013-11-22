@@ -31,7 +31,7 @@ class ExtendedServerAttributesController(wsgi.Controller):
     def _get_hypervisor_instance_name(self, context, instance):
         if not CONF.cells.enable:
             return instance['name']
-        sys_metadata = utils.instance_meta(instance)
+        sys_metadata = utils.instance_sys_meta(instance)
         return sys_metadata.get('instance_name', '')
 
     def _extend_server(self, context, server, instance):
