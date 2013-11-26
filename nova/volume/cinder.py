@@ -28,6 +28,7 @@ from cinderclient import service_catalog
 from cinderclient.v1 import client as cinder_client
 from oslo.config import cfg
 
+from nova.availability_zones import get_instance_availability_zone
 from nova.db import base
 from nova import exception
 from nova.openstack.common.gettextutils import _
@@ -233,7 +234,8 @@ class API(base.Base):
             msg = _("already attached")
             raise exception.InvalidVolume(reason=msg)
         if instance and not CONF.cinder_cross_az_attach:
-            if instance['availability_zone'] != volume['availability_zone']:
+            instance_az = get_instance_availability_zone(context, instance)
+            if instance_az != volume['availability_zone']:
                 msg = _("Instance and volume not in same availability_zone")
                 raise exception.InvalidVolume(reason=msg)
 
