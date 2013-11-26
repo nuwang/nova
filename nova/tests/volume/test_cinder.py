@@ -108,7 +108,13 @@ class CinderApiTestCase(test.NoDBTestCase):
     def test_check_attach_availability_zone_differs(self):
         volume = {'status': 'available'}
         volume['attach_status'] = "detached"
-        instance = {'availability_zone': 'zone1'}
+        instance = {'availability_zone': 'zone1', 'host': 'fakehost'}
+
+        self.mox.StubOutWithMock(cinder, 'get_instance_availability_zone')
+        cinder.get_instance_availability_zone(
+            self.ctx, instance).MultipleTimes().AndReturn('zone1')
+        self.mox.ReplayAll()
+
         volume['availability_zone'] = 'zone2'
         cinder.CONF.set_override('cinder_cross_az_attach', False)
         self.assertRaises(exception.InvalidVolume,
@@ -121,7 +127,11 @@ class CinderApiTestCase(test.NoDBTestCase):
         volume = {'status': 'available'}
         volume['attach_status'] = "detached"
         volume['availability_zone'] = 'zone1'
-        instance = {'availability_zone': 'zone1'}
+        instance = {'availability_zone': 'zone1', 'host': 'fakehost'}
+        self.mox.StubOutWithMock(cinder, 'get_instance_availability_zone')
+        cinder.get_instance_availability_zone(self.ctx,
+                                              instance).AndReturn('zone1')
+        self.mox.ReplayAll()
         cinder.CONF.set_override('cinder_cross_az_attach', False)
         self.assertIsNone(self.api.check_attach(self.ctx, volume, instance))
         cinder.CONF.reset()
