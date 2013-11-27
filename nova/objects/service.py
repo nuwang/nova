@@ -32,7 +32,7 @@ class Service(base.NovaPersistentObject, base.NovaObject):
     VERSION = '1.2'
 
     fields = {
-        'id': int,
+        'id': utils.int_or_str,
         'host': utils.str_or_none,
         'binary': utils.str_or_none,
         'topic': utils.str_or_none,
