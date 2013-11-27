@@ -60,6 +60,13 @@ def str_value(val):
     return unicode(val)
 
 
+def int_or_str(val):
+    try:
+        return int(val)
+    except ValueError:
+        return unicode(val)
+
+
 def str_or_none(val):
     """Attempt to stringify a value, or None."""
     if val is None:
