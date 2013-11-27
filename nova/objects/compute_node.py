@@ -24,7 +24,7 @@ class ComputeNode(base.NovaPersistentObject, base.NovaObject):
     VERSION = '1.2'
 
     fields = {
-        'id': int,
+        'id': utils.int_or_str,
         'service_id': int,
         'vcpus': int,
         'memory_mb': int,
