@@ -38,6 +38,7 @@ from nova.virt import netutils
 
 authorize = extensions.extension_authorizer('compute', 'security_groups')
 softauth = extensions.soft_extension_authorizer('compute', 'security_groups')
+auth_update = extensions.extension_authorizer('compute', 'security_groups:update')
 
 
 def make_rule(elem):
@@ -78,9 +79,9 @@ def make_sg(elem):
     make_rule(rule)
 
 
-def _authorize_context(req):
+def _authorize_context(req, authorizer=authorize):
     context = req.environ['nova.context']
-    authorize(context)
+    authorizer(context)
     return context
 
 sg_nsmap = {None: wsgi.XMLNS_V11}
@@ -321,7 +322,7 @@ class SecurityGroupController(SecurityGroupControllerBase):
     @wsgi.serializers(xml=SecurityGroupTemplate)
     def update(self, req, id, body):
         """Update a security group."""
-        context = _authorize_context(req)
+        context = _authorize_context(req, authorizer=auth_update)
 
         with translate_exceptions():
             id = self.security_group_api.validate_id(id)
