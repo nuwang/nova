@@ -693,7 +693,7 @@ class _TargetedMessageMethods(_BaseMessageMethods):
                                                         instance)
         # FIXME(comstud): This is temporary/transitional until I can
         # work out a better way to pass full objects down.
-        EXPECTS_OBJECTS = ['start', 'stop']
+        EXPECTS_OBJECTS = ['start', 'stop', 'lock', 'unlock']
         if method in EXPECTS_OBJECTS:
             inst_obj = instance_obj.Instance()
             inst_obj._from_db_object(message.ctxt, inst_obj, instance)
