@@ -123,7 +123,7 @@ class CellsRPCDriverTestCase(test.TestCase):
                        _fake_cast_to_server)
 
         self.driver.send_message_to_cell(cell_state, message)
-        expected_server_params = {'hosts': ['rpc_host2'],
+        expected_server_params = {'hostname': 'rpc_host2',
                                   'password': 'password2',
                                   'port': 3092,
                                   'username': 'username2',
@@ -162,7 +162,7 @@ class CellsRPCDriverTestCase(test.TestCase):
                        'fanout_cast_to_server', _fake_fanout_cast_to_server)
 
         self.driver.send_message_to_cell(cell_state, message)
-        expected_server_params = {'hosts': ['rpc_host2'],
+        expected_server_params = {'hostname': 'rpc_host2',
                                   'password': 'password2',
                                   'port': 3092,
                                   'username': 'username2',

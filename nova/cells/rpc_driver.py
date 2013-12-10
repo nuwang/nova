@@ -23,9 +23,11 @@ from oslo.config import cfg
 
 from nova.cells import driver
 from nova.openstack.common.gettextutils import _
+from nova.openstack.common import network_utils
 from nova.openstack.common import rpc
 from nova.openstack.common.rpc import dispatcher as rpc_dispatcher
 from nova import rpcclient
+from nova import utils
 
 cell_rpc_driver_opts = [
         cfg.StrOpt('rpc_driver_queue_base',
@@ -141,15 +143,8 @@ class InterCellRPCAPI(rpcclient.RpcProxy):
         """Turn the DB information for a cell into the parameters
         needed for the RPC call.
         """
-        server_params = None
-        transport_urls = next_hop.db_info['transport_url']
-        for url in transport_urls.split(','):
-            params = parse_transport_url(url)
-            hostname = params.pop('hostname')
-            if server_params is None:
-                server_params = params
-                server_params['hosts'] = []
-            server_params['hosts'].append(hostname)
+        server_params = parse_transport_url(next_hop.db_info['transport_url'])
+
         return dict((k, v) for k, v in server_params.items() if v)
 
     def send_message_to_cell(self, cell_state, message):
@@ -191,6 +186,31 @@ class InterCellRPCDispatcher(object):
 
 
 def parse_transport_url(url):
+    urls = url.split(',')
+    params_list = []
+    for url in urls:
+        new_params = _parse_transport_url(url)
+        params_list.append(new_params)
+    params = params_list[0].copy()
+    if len(params_list) > 1:
+        params['multiparams'] = params_list
+    return params
+
+
+def unparse_transport_url(transport, secure=True):
+    transport_urls = []
+    for params in transport.get('multiparams', [transport]):
+        if 'hostname' not in params or params['hostname'] is None:
+            return _unparse_transport_url(params, secure)
+        for hostname in params['hostname'].split(','):
+            local_params = params.copy()
+            local_params['hostname'] = hostname
+            url = _unparse_transport_url(local_params, secure)
+            transport_urls.append(url)
+    return ','.join(transport_urls)
+
+
+def _parse_transport_url(url):
     """
     Parse a transport URL.
 
@@ -261,7 +281,7 @@ def parse_transport_url(url):
     }
 
 
-def unparse_transport_url(transport, secure=True):
+def _unparse_transport_url(transport, secure=True):
     """
     Unparse a transport URL; that is, synthesize a transport URL from
     a dictionary similar to that one returned by
@@ -300,10 +320,12 @@ def unparse_transport_url(transport, secure=True):
 
     # Build the network location portion of the transport URL
     if hostname:
-        if ':' in hostname:
+        if utils.is_valid_ipv6(hostname):
             # Encode an IPv6 address properly
             netloc += "[%s]" % hostname
         else:
+            hostname, port = network_utils.parse_host_port(hostname,
+                                                           default_port=port)
             netloc += hostname
     if port is not None:
         netloc += ":%d" % port

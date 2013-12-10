@@ -432,14 +432,9 @@ class Connection(object):
         # Keys to translate from server_params to kombu params
         server_params_to_kombu_params = {'username': 'userid'}
 
-        rabbit_hosts = server_params.pop('hosts', self.conf.rabbit_hosts)
-
         ssl_params = self._fetch_ssl_params()
         params_list = []
-        for adr in rabbit_hosts:
-            hostname, port = network_utils.parse_host_port(
-                adr, default_port=self.conf.rabbit_port)
-
+        def _set_params(server_params, hostname=None, port=None):
             params = {
                 'hostname': hostname,
                 'port': port,
@@ -458,6 +453,17 @@ class Connection(object):
                 params['ssl'] = ssl_params
 
             params_list.append(params)
+
+        if 'multiparams' in server_params:
+            for params in server_params['multiparams']:
+                hostname, port = network_utils.parse_host_port(
+                    params['hostname'], default_port=self.conf.rabbit_port)
+                _set_params(params, hostname, port)
+        else:
+            for adr in self.conf.rabbit_hosts:
+                hostname, port = network_utils.parse_host_port(
+                    adr, default_port=self.conf.rabbit_port)
+                _set_params(server_params, hostname, port)
 
         self.params_list = params_list
 
