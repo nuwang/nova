@@ -434,7 +434,7 @@ class CellsSchedulerTestCase(test.TestCase):
             raise test.TestingException("shouldn't be called")
 
         try:
-            self.scheduler._schedule_build_to_cells(None, None, None, _test,
+            self.scheduler._schedule_build_to_cells(None, None, {}, _test,
                                                     None)
         except test.TestingException:
             self.fail("Scheduling did not properly short circuit")

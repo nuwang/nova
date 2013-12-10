@@ -21,6 +21,7 @@ import time
 
 from oslo.config import cfg
 
+from nova.availability_zones import get_availability_zones
 from nova.cells import filters
 from nova.cells import weights
 from nova import compute
@@ -29,6 +30,7 @@ from nova.compute import instance_actions
 from nova.compute import utils as compute_utils
 from nova.compute import vm_states
 from nova import conductor
+from nova import context
 from nova.db import base
 from nova import exception
 from nova.objects import base as obj_base
@@ -275,34 +277,26 @@ class CellsScheduler(base.Base):
         try:
             for i in xrange(max(0, CONF.cells.scheduler_retries) + 1):
                 try:
+
+                    if self.state_manager.get_child_cells():
+                        spec = filter_properties.get('request_spec', {})
+                        props = spec.get('instance_properties', {})
+                        availability_zone = props.get('availability_zone', None)
+                        our_cell = self.state_manager.get_my_state()
+                        # Only remove if we are a middle cell
+                        admin_ctxt = context.get_admin_context()
+                        our_azs = get_availability_zones(admin_ctxt, get_only_available=True)
+                        if not our_cell.capacities and availability_zone in our_azs:
+                            # If the instance is scheduled for our cell,
+                            # then remove the AZ from the instance.
+                            for instance in method_kwargs.get('instances', []):
+                                instance.pop('availability_zone', None)
+                            props.pop('availability_zone', None)
+
                     target_cells = self._grab_target_cells(filter_properties)
                     if target_cells is None:
                         # a filter took care of scheduling.  skip.
                         return
-
-                    if self.state_manager.get_child_cells():
-                        instances = method_kwargs.get('instances', [])
-                        availability_zone = [i.get('availability_zone', None)
-                                             for i in instances]
-
-                        our_azs = self.state_manager.get_my_state()\
-                            .capabilities.get('availability_zones', [])
-
-                        # Try deprecated scheduler hint
-                        if not any(availability_zone):
-                            filter_props = method_kwargs.get('scheduler_hints', {})
-                            scheduler_hints = filter_props.get('scheduler_hints', {})
-                            availability_zone = scheduler_hints.get('cell', None)
-                            cell_scheduled = scheduler_hints.pop('cell', None)
-                            if scheduler_hints and cell_scheduled in our_azs:
-                                scheduler_hints.pop('cell')
-
-                        # If the instance is scheduled for our cell,
-                        # then remove the AZ from the instance.
-                        for instance in instances:
-                            az = instance.get('availability_zone', None)
-                            if az in our_azs:
-                                instance.pop('availability_zone')
 
                     return method(message, target_cells, instance_uuids,
                             method_kwargs)
