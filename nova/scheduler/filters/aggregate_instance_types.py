@@ -1,7 +1,7 @@
 from nova import db
 from nova.openstack.common import log as logging
 from nova.scheduler import filters
-
+from nova.openstack.common.gettextutils import _
 
 LOG = logging.getLogger(__name__)
 
@@ -22,9 +22,9 @@ class AggregateInstanceTypesFilter(filters.BaseHostFilter):
         host_instance_types = metadata.get('instance_type', None)
 
         if host_instance_types:
-             host_instance_types = list(metadata['instance_type'])
-             if instance_type['name'] in host_instance_types:
-                 return True
+            host_instance_types = list(metadata['instance_type'])
+            if instance_type['name'] in host_instance_types:
+                return True
 
         LOG.debug(_("%(host_state)s fails instance_type name "
                     "requirements"), locals())
