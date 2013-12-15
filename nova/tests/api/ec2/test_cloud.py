@@ -836,7 +836,7 @@ class CloudTestCase(test.TestCase):
         self.assertEqual(instance['instanceId'], instance_id)
         self.assertEqual(instance['placement']['availabilityZone'],
                 'zone2')
-        self.assertEqual(instance['ipAddress'], '1.2.3.4')
+        self.assertEqual(instance['ipAddress'], '192.168.0.3')
         self.assertEqual(instance['dnsName'], '1.2.3.4')
         self.assertEqual(instance['tagSet'], [])
         self.assertEqual(instance['privateDnsName'], 'server-4321')
@@ -1206,7 +1206,7 @@ class CloudTestCase(test.TestCase):
         instance = result['instancesSet'][0]
         instance_id = ec2utils.id_to_ec2_inst_id(inst1['uuid'])
         self.assertEqual(instance['instanceId'], instance_id)
-        self.assertEqual(instance['ipAddress'], '1.2.3.4')
+        self.assertEqual(instance['ipAddress'], '192.168.0.3')
         self.assertEqual(instance['dnsName'], '1.2.3.4')
         self.assertEqual(instance['privateDnsName'], 'server-1234')
         self.assertEqual(instance['privateIpAddress'], '192.168.0.3')
