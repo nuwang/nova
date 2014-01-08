@@ -1,3 +1,5 @@
+diff --git a/requirements.txt b/requirements.txt
+index e6c8bbc..2216307 100644
 --- a/requirements.txt
 +++ b/requirements.txt
 @@ -1,5 +1,5 @@
@@ -7,7 +9,14 @@
  amqplib>=0.6.1
  anyjson>=0.3.3
  argparse
-@@ -25,7 +25,6 @@ python-cinderclient>=1.0.5
+@@ -19,13 +19,12 @@ suds>=0.4
+ paramiko>=1.8.0
+ pyasn1
+ Babel>=1.3
+-iso8601>=0.1.8
++iso8601>=0.1.4
+ jsonschema>=1.3.0,!=1.4.0
+ python-cinderclient>=1.0.6
  python-neutronclient>=2.3.0,<3
  python-glanceclient>=0.9.0
  python-keystoneclient>=0.3.2
