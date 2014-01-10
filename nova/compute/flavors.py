@@ -161,7 +161,7 @@ def create(name, memory, vcpus, root_gb, ephemeral_gb=0, flavorid=None,
         ctxt = context.get_admin_context()
         if cell:
             cells_rpcapi = cell_rpcapi.CellsAPI()
-            return cells_rpcapi.instance_type_create(ctxt, cell, kwargs)
+            return cells_rpcapi.flavor_create(ctxt, cell, kwargs)
         else:
             return db.flavor_create(ctxt, kwargs)
     except db_exc.DBError as e:
