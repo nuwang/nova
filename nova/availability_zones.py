@@ -133,10 +133,10 @@ def get_availability_zones(context, get_only_available=False, cells_api=False):
                     mute_azs.extend(cell['capabilities']['availability_zones'])
                 else:
                     global_azs.extend(cell['capabilities']['availability_zones'])
-                available_zones = list(set(global_azs))
-                unavailable_zones = list(set(mute_azs))
-                cache.set('az-availabile-list', available_zones, 300)
-                cache.set('az-unavailabile-list', unavailable_zones, 300)
+            available_zones = list(set(global_azs))
+            unavailable_zones = list(set(mute_azs))
+            cache.set('az-availabile-list', available_zones, 300)
+            cache.set('az-unavailabile-list', unavailable_zones, 300)
         if get_only_available:
             return available_zones
         return (available_zones, unavailable_zones)
