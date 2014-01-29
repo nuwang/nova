@@ -116,8 +116,8 @@ def get_availability_zones(context, get_only_available=False, cells_api=False):
     # Override for cells
     if cells_api:
         cache = _get_cache()
-        available_zones = cache.get('az-availabile-list')
-        unavailable_zones = cache.get('az-unavailabile-list')
+        available_zones = cache.get('az-available-list')
+        unavailable_zones = cache.get('az-unavailable-list')
 
         if not available_zones:
             cells_rpcapi = cell_rpcapi.CellsAPI()
@@ -135,8 +135,8 @@ def get_availability_zones(context, get_only_available=False, cells_api=False):
                     global_azs.extend(cell['capabilities']['availability_zones'])
             available_zones = list(set(global_azs))
             unavailable_zones = list(set(mute_azs))
-            cache.set('az-availabile-list', available_zones, 300)
-            cache.set('az-unavailabile-list', unavailable_zones, 300)
+            cache.set('az-available-list', available_zones, 300)
+            cache.set('az-unavailable-list', unavailable_zones, 300)
         if get_only_available:
             return available_zones
         return (available_zones, unavailable_zones)
