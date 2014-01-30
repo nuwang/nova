@@ -202,6 +202,7 @@ class Controller(wsgi.Controller):
                            {'project_id': context.project_id,
                             'user_id': context.user_id})
             del search_opts['all_tenants']
+            context = context.elevated()
         else:
             if context.project_id:
                 search_opts['project_id'] = context.project_id
@@ -369,6 +370,13 @@ class Controller(wsgi.Controller):
     def show(self, req, id):
         """Returns server details by server id."""
         context = req.environ['nova.context']
+        try:
+            policy.enforce(context, 'compute:get_all_tenants',
+                           {'project_id': context.project_id,
+                            'user_id': context.user_id})
+            context = context.elevated()
+        except exception.PolicyNotAuthorized:
+            pass
         instance = self._get_server(context, req, id)
         return self._view_builder.show(req, instance)
 
