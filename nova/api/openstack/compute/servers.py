@@ -587,6 +587,7 @@ class Controller(wsgi.Controller):
                            {'project_id': context.project_id,
                             'user_id': context.user_id})
             del search_opts['all_tenants']
+            context = context.elevated()
         else:
             if context.project_id:
                 search_opts['project_id'] = context.project_id
