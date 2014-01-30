@@ -1708,6 +1708,7 @@ class API(base.Base):
 
         if 'all_tenants' in search_opts:
             check_policy(context, "get_all_tenants", target)
+            context = context.elevated()
 
         LOG.debug(_("Searching by: %s") % str(search_opts))
 
