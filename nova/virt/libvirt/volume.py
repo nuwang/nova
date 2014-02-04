@@ -312,18 +312,19 @@ class LibvirtISCSIVolumeDriver(LibvirtBaseVolumeDriver):
         """Detach the volume from instance_name."""
         iscsi_properties = connection_info['data']
         multipath_device = None
+        host_device = ("/dev/disk/by-path/ip-%s-iscsi-%s-lun-%s" %
+                       (iscsi_properties['target_portal'],
+                        iscsi_properties['target_iqn'],
+                        iscsi_properties.get('target_lun', 0)))
         if CONF.libvirt_iscsi_use_multipath:
-            host_device = ("/dev/disk/by-path/ip-%s-iscsi-%s-lun-%s" %
-                           (iscsi_properties['target_portal'],
-                            iscsi_properties['target_iqn'],
-                            iscsi_properties.get('target_lun', 0)))
             multipath_device = self._get_multipath_device_name(host_device)
 
         super(LibvirtISCSIVolumeDriver,
               self).disconnect_volume(connection_info, disk_dev)
 
         if CONF.libvirt_iscsi_use_multipath and multipath_device:
-            return self._disconnect_volume_multipath_iscsi(iscsi_properties)
+            return self._disconnect_volume_multipath_iscsi(iscsi_properties,
+                                                           multipath_device)
 
         # NOTE(vish): Only disconnect from the target if no luns from the
         #             target are in use.
@@ -334,8 +335,22 @@ class LibvirtISCSIVolumeDriver(LibvirtBaseVolumeDriver):
         devices = [dev for dev in devices if dev.startswith(device_prefix)]
         if not devices:
             self._disconnect_from_iscsi_portal(iscsi_properties)
+        elif host_device not in devices:
+            # Delete device if LUN is not in use by another instance
+            self._delete_device(host_device)
 
-    def _disconnect_volume_multipath_iscsi(self, iscsi_properties):
+    def _delete_device(self, device_path):
+        device_name = os.path.basename(os.path.realpath(device_path))
+        delete_control = '/sys/block/' + device_name + '/device/delete'
+        if os.path.exists(delete_control):
+            # Copy '1' from stdin to the device delete control file
+            utils.execute('cp', '/dev/stdin', delete_control,
+                          process_input='1', run_as_root=True)
+        else:
+            LOG.warn(_("Unable to delete volume device %s"), device_name)
+
+    def _disconnect_volume_multipath_iscsi(self, iscsi_properties,
+                                           multipath_device):
         self._rescan_iscsi()
         self._rescan_multipath()
         block_devices = self.connection.get_all_block_devices()
@@ -385,10 +400,23 @@ class LibvirtISCSIVolumeDriver(LibvirtBaseVolumeDriver):
             # disconnect if no other multipath devices with same iqn
             self._disconnect_mpath(iscsi_properties, ips_iqns)
             return
+        elif multipath_device not in devices:
+            # delete the devices associated w/ the unused multipath
+            self._delete_mpath(iscsi_properties, multipath_device)
 
         # else do not disconnect iscsi portals,
         # as they are used for other luns
         return
+
+    def _delete_mpath(self, iscsi_properties, multipath_device):
+        entries = self._get_iscsi_devices()
+        iqn_lun = '%s-lun-%s' % (iscsi_properties['target_iqn'],
+                                 iscsi_properties.get('target_lun', 0))
+        for dev in ['/dev/disk/by-path/%s' % dev for dev in entries
+                    if iqn_lun in dev]:
+            self._delete_device(dev)
+
+        self._rescan_multipath()
 
     def _connect_to_iscsi_portal(self, iscsi_properties):
         # NOTE(vish): If we are on the same host as nova volume, the
@@ -624,7 +652,8 @@ class LibvirtISERVolumeDriver(LibvirtISCSIVolumeDriver):
                                                   disk_dev)
 
         if CONF.libvirt_iser_use_multipath and multipath_device:
-            return self._disconnect_volume_multipath_iscsi(iser_properties)
+            return self._disconnect_volume_multipath_iscsi(iser_properties,
+                                                           multipath_device)
 
         # NOTE(vish): Only disconnect from the target if no luns from the
         #             target are in use.
