@@ -426,6 +426,7 @@ class ServerSecurityGroupController(SecurityGroupControllerBase):
     def index(self, req, server_id):
         """Returns a list of security groups for the given instance."""
         context = _authorize_context(req)
+        context = context.elevated()
 
         self.security_group_api.ensure_default(context)
 
