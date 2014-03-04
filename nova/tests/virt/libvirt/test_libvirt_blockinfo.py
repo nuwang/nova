@@ -194,6 +194,7 @@ class LibvirtBlockInfoTest(test.TestCase):
                                              None)
         expect = {
             'disk': {'bus': 'lxc', 'dev': None, 'type': 'disk'},
+            'disk.local': {'bus': 'lxc', 'dev': None, 'type': 'disk'},
             'root': {'bus': 'lxc', 'dev': None, 'type': 'disk'}
         }
         self.assertEqual(mapping, expect)

@@ -2802,18 +2802,6 @@ class LibvirtDriver(driver.ComputeDriver):
                         {'default_swap_device': block_device.prepend_dev(
                             diskswap.target_dev)})
 
-                for vol in block_device_mapping:
-                    connection_info = vol['connection_info']
-                    vol_dev = block_device.prepend_dev(vol['mount_device'])
-                    info = disk_mapping[vol_dev]
-                    cfg = self.volume_driver_method('connect_volume',
-                                                    connection_info,
-                                                    info)
-                    devices.append(cfg)
-                    self.virtapi.block_device_mapping_update(
-                        nova_context.get_admin_context(), vol.id,
-                        {'connection_info': jsonutils.dumps(connection_info)})
-
             if 'disk.config' in disk_mapping:
                 diskconfig = self.get_guest_disk_config(instance,
                                                         'disk.config',
@@ -2821,6 +2809,18 @@ class LibvirtDriver(driver.ComputeDriver):
                                                         inst_type,
                                                         'raw')
                 devices.append(diskconfig)
+
+        for vol in block_device_mapping:
+            connection_info = vol['connection_info']
+            vol_dev = block_device.prepend_dev(vol['mount_device'])
+            info = disk_mapping[vol_dev]
+            cfg = self.volume_driver_method('connect_volume',
+                                            connection_info,
+                                            info)
+            devices.append(cfg)
+            self.virtapi.block_device_mapping_update(
+                nova_context.get_admin_context(), vol.id,
+                {'connection_info': jsonutils.dumps(connection_info)})
 
         for d in devices:
             self.set_cache_mode(d)
