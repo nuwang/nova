@@ -453,7 +453,12 @@ class IptablesFirewallDriver(FirewallDriver):
             self._inner_do_refresh_rules(instance, ipv4_rules, ipv6_rules)
 
     def do_refresh_instance_rules(self, instance):
-        network_info = self.network_infos[instance['id']]
+        try:
+            network_info = self.network_infos[instance['id']]
+        except KeyError:
+            # Race condition, instance is already gone
+            # think this is fixed in icehouse
+            return
         ipv4_rules, ipv6_rules = self.instance_rules(instance, network_info)
         self._inner_do_refresh_rules(instance, ipv4_rules, ipv6_rules)
 
