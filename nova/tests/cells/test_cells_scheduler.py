@@ -130,7 +130,8 @@ class CellsSchedulerTestCase(test.TestCase):
             self.assertEqual('cow', meta['moo'])
             sys_meta = utils.instance_sys_meta(instance)
             self.assertEqual('cat', sys_meta['meow'])
-            self.assertEqual('meow', instance['hostname'])
+            self.assertEqual('moo-%s' % instance['uuid'],
+                             instance['hostname'])
             self.assertEqual('moo-%s' % instance['uuid'],
                              instance['display_name'])
             self.assertEqual('fake_image_ref', instance['image_ref'])

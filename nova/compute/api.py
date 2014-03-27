@@ -574,8 +574,7 @@ class API(base.Base):
                             'multi_instance_display_name_template.'))
             new_name = instance['display_name']
         instance.display_name = new_name
-        if not instance.get('hostname', None):
-            instance.hostname = utils.sanitize_hostname(new_name)
+        instance.hostname = utils.sanitize_hostname(new_name)
         instance.save()
         return instance
 
