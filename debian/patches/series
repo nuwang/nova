@@ -5,7 +5,7 @@ fix-requirements.patch
 avoid-failing-test.patch
 # native-lxc-hypervisor.patch  # No thanks chuck
 fix-novnc-regression.patch
-fix-boto-versioning.patch
+#fix-boto-versioning.patch
 
 
 # Add not py files to manifest
