@@ -612,7 +612,8 @@ class _BaseMessageMethods(base.Base):
         super(_BaseMessageMethods, self).__init__()
         self.msg_runner = msg_runner
         self.state_manager = msg_runner.state_manager
-        self.compute_api = compute.API()
+        self.compute_api = compute.api.API()
+        self.aggregate_api = compute.api.AggregateAPI()
         self.compute_rpcapi = compute_rpcapi.ComputeAPI()
         self.consoleauth_rpcapi = consoleauth_rpcapi.ConsoleAuthAPI()
         self.host_api = compute.HostAPI()
@@ -944,6 +945,39 @@ class _TargetedMessageMethods(_BaseMessageMethods):
                                         image_href, admin_password,
                                         files_to_inject, **kwargs)
 
+    def create_aggregate(self, message, aggregate_name, availability_zone):
+        response = self.aggregate_api.create_aggregate(
+            message.ctxt, aggregate_name, availability_zone)
+        return jsonutils.to_primitive(response)
+
+    def get_aggregate(self, message, aggregate_id):
+        response = self.aggregate_api.get_aggregate(
+            message.ctxt, aggregate_id)
+        return jsonutils.to_primitive(response)
+
+    def update_aggregate(self, message, aggregate_id, values):
+        response = self.aggregate_api.update_aggregate(
+            message.ctxt, aggregate_id, values)
+        return jsonutils.to_primitive(response)
+
+    def update_aggregate_metadata(self, message, aggregate_id, metadata):
+        response = self.aggregate_api.update_aggregate_metadata(
+            message.ctxt, aggregate_id, metadata)
+        return jsonutils.to_primitive(response)
+
+    def delete_aggregate(self, message, aggregate_id):
+        self.aggregate_api.delete_aggregate(message.ctxt, aggregate_id)
+
+    def add_host_to_aggregate(self, message, aggregate_id, host_name):
+        response = self.aggregate_api.add_host_to_aggregate(
+            message.ctxt, aggregate_id, host_name)
+        return jsonutils.to_primitive(response)
+
+    def remove_host_from_aggregate(self, message, aggregate_id, host_name):
+        response = self.aggregate_api.remove_host_from_aggregate(
+            message.ctxt, aggregate_id, host_name)
+        return jsonutils.to_primitive(response)
+
 
 class _BroadcastMessageMethods(_BaseMessageMethods):
     """These are the methods that can be called as a part of a broadcast
@@ -1220,6 +1254,10 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
     def get_migrations(self, message, filters):
         context = message.ctxt
         return self.compute_api.get_migrations(context, filters)
+
+    def get_aggregate_list(self, message):
+        response = self.aggregate_api.get_aggregate_list(message.ctxt)
+        return jsonutils.to_primitive(response)
 
 
 _CELL_MESSAGE_TYPE_TO_MESSAGE_CLS = {'targeted': _TargetedMessage,
@@ -1805,6 +1843,68 @@ class MessageRunner(object):
                             kwargs=kwargs)
         self._instance_action(ctxt, instance, 'rebuild_instance',
                               extra_kwargs=extra_kwargs)
+
+    def create_aggregate(self, ctxt, cell_name, aggregate_name,
+                         availability_zone):
+        method_kwargs = dict(aggregate_name=aggregate_name,
+                             availability_zone=availability_zone)
+        message = _TargetedMessage(self, ctxt, 'create_aggregate',
+                                   method_kwargs, 'down',
+                                   cell_name, need_response=True)
+        return message.process()
+
+    def get_aggregate(self, ctxt, cell_name, aggregate_id):
+        method_kwargs = dict(aggregate_id=aggregate_id)
+        message = _TargetedMessage(self, ctxt, 'get_aggregate',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
+
+    def get_aggregate_list(self, ctxt):
+        message = _BroadcastMessage(self, ctxt, 'get_aggregate_list',
+                {}, 'down', need_response=True)
+        return message.process()
+
+    def update_aggregate(self, ctxt, cell_name, aggregate_id, values):
+        method_kwargs = dict(aggregate_id=aggregate_id, values=values)
+        message = _TargetedMessage(self, ctxt, 'update_aggregate',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
+
+    def update_aggregate_metadata(self, ctxt, cell_name,
+                                  aggregate_id, metadata):
+        method_kwargs = dict(aggregate_id=aggregate_id, metadata=metadata)
+        message = _TargetedMessage(self, ctxt, 'update_aggregate_metadata',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
+
+    def delete_aggregate(self, ctxt, cell_name, aggregate_id):
+        method_kwargs = dict(aggregate_id=aggregate_id)
+        # Need response in case the operation fails, so an exception will
+        # return
+        message = _TargetedMessage(self, ctxt, 'delete_aggregate',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
+
+    def add_host_to_aggregate(self, ctxt, cell_name, aggregate_id, host_name):
+        method_kwargs = dict(aggregate_id=aggregate_id,
+                             host_name=host_name)
+        message = _TargetedMessage(self, ctxt, 'add_host_to_aggregate',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
+
+    def remove_host_from_aggregate(self, ctxt, cell_name,
+                                   aggregate_id, host_name):
+        method_kwargs = dict(aggregate_id=aggregate_id,
+                             host_name=host_name)
+        message = _TargetedMessage(self, ctxt, 'remove_host_from_aggregate',
+                method_kwargs, 'down',
+                cell_name, need_response=True)
+        return message.process()
 
     @staticmethod
     def get_message_types():
