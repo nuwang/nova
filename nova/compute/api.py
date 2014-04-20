@@ -2648,7 +2648,8 @@ class API(base.Base):
                                     vm_states.SUSPENDED, vm_states.STOPPED,
                                     vm_states.RESIZED, vm_states.SOFT_DELETED],
                           task_state=None)
-    def attach_volume(self, context, instance, volume_id, device=None):
+    def attach_volume(self, context, instance, volume_id, device=None,
+                      disk_bus=None, device_type=None):
         """Attach an existing volume to an existing instance."""
         # NOTE(vish): Fail fast if the device is not going to pass. This
         #             will need to be removed along with the test if we
