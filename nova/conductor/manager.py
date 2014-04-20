@@ -599,8 +599,16 @@ class ConductorManager(manager.Manager):
     def compute_reboot(self, context, instance, reboot_type):
         self.compute_api.reboot(context, instance, reboot_type)
 
-    def object_backport(self, context, objinst, target_version):
-        return objinst.obj_to_primitive(target_version=target_version)
+    def object_backport(self, context, objprim, target_version):
+        changes = objprim.get('nova_object.changes', [])
+        instance_uuid = objprim['nova_object.data']['uuid']
+        dbinst = self.instance_get_by_uuid(context, instance_uuid)
+        objinst = instance_obj.Instance._from_db_object(
+            context, instance_obj.Instance(), dbinst)
+        for change in changes:
+            if change not in ('metadata', 'system_metadata'):
+                setattr(objinst, change, objprim['nova_object.data'][change])
+        return objinst
 
 
 class ComputeTaskManager(base.Base):
