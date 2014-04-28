@@ -97,6 +97,11 @@ class SchedulerAPI(object):
         self.client = rpc.get_client(target, version_cap=version_cap,
                                      serializer=serializer)
 
+    def _get_compat_version(self, current, havana_compat):
+        if not self.client.can_send_version(current):
+            return havana_compat
+        return current
+
     def select_destinations(self, ctxt, request_spec, filter_properties):
         cctxt = self.client.prepare()
         return cctxt.call(ctxt, 'select_destinations',
@@ -112,7 +117,8 @@ class SchedulerAPI(object):
                       'is_first_time': is_first_time,
                       'filter_properties': filter_properties,
                       'legacy_bdm_in_spec': legacy_bdm_in_spec}
-        cctxt = self.client.prepare()
+        version = self._get_compat_version('3.0', '2.9')
+        cctxt = self.client.prepare(version=version)
         cctxt.cast(ctxt, 'run_instance', **msg_kwargs)
 
     def prep_resize(self, ctxt, instance, instance_type, image,
