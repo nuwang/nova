@@ -139,12 +139,24 @@ def get_instance_availability_zone(context, instance):
     host = str(instance.get('host'))
     if not host:
         return None
-
-    cache_key = _make_cache_key(host)
+    cache_string = host
+    cell_type = cell_opts.get_cell_type()
+    if cell_type == 'api':
+        cell_name = str(instance.get('cell_name'))
+        if not cell_name:
+            return None
+        cache_string += cell_name
+    cache_key = _make_cache_key(cache_string)
     cache = _get_cache()
     az = cache.get(cache_key)
     if not az:
         elevated = context.elevated()
-        az = get_host_availability_zone(elevated, host)
+        if cell_type == 'api':
+            sys_metadata = utils.instance_sys_meta(instance)
+            az = sys_metadata.get('availability_zone')
+            if not az:
+                return None
+        else:
+            az = get_host_availability_zone(elevated, host)
         cache.set(cache_key, az, AZ_CACHE_SECONDS)
     return az
