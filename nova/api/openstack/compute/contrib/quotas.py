@@ -190,10 +190,10 @@ class QuotaSetsController(object):
                                 {'value': value, 'key': key,
                                  'quota_used': quota_used})
                         raise webob.exc.HTTPBadRequest(explanation=msg)
-
-            minimum = settable_quotas[key]['minimum']
-            maximum = settable_quotas[key]['maximum']
-            self._validate_quota_limit(value, minimum, maximum)
+            if not force_update:
+                minimum = settable_quotas[key]['minimum']
+                maximum = settable_quotas[key]['maximum']
+                self._validate_quota_limit(value, minimum, maximum)
             try:
                 db.quota_create(context, project_id, key, value,
                                 user_id=user_id)
