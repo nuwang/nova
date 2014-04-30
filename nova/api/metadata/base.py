@@ -25,6 +25,7 @@ from oslo.config import cfg
 
 from nova.api.ec2 import ec2utils
 from nova.api.metadata import password
+from nova import availability_zones as az
 from nova import block_device
 from nova.compute import flavors
 from nova import conductor
@@ -128,8 +129,8 @@ class InstanceMetadata():
         else:
             capi = conductor.API()
 
-        self.availability_zone = ec2utils.get_availability_zone_by_host(
-                instance['host'], capi)
+        self.availability_zone = az.get_instance_availability_zone(ctxt,
+                                                                   instance)
 
         self.security_groups = secgroup_obj.SecurityGroupList.get_by_instance(
             ctxt, instance)
