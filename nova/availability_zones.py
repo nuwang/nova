@@ -17,8 +17,10 @@
 
 from oslo.config import cfg
 
+from nova.cells import opts as cell_opts
 from nova import db
 from nova.openstack.common import memorycache
+from nova import utils
 
 # NOTE(vish): azs don't change that often, so cache them for an hour to
 #             avoid hitting the db multiple times on every request.
