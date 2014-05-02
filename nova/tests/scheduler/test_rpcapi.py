@@ -67,7 +67,7 @@ class SchedulerRpcAPITestCase(test.NoDBTestCase):
         self._test_scheduler_api('run_instance', rpc_method='cast',
                 request_spec='fake_request_spec',
                 admin_password='pw', injected_files='fake_injected_files',
-                requested_networks='fake_requested_networks',
+                requested_networks='fake_requested_networks', version='3.0',
                 is_first_time=True, filter_properties='fake_filter_properties',
                 legacy_bdm_in_spec=False)
 
