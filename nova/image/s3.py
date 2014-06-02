@@ -64,11 +64,15 @@ s3_opts = [
                default=False,
                help='Whether to affix the tenant id to the access key '
                     'when downloading from S3'),
+    cfg.StrOpt('keystone_auth_url',
+               default='http://localhost:5000/v2.0/',
+               help='Auth URL to use for getting users s3 credentials'),
     ]
 
 CONF = cfg.CONF
 CONF.register_opts(s3_opts)
 CONF.import_opt('my_ip', 'nova.netconf')
+CONF.import_opt('auth_strategy', 'nova.api.auth')
 
 
 class S3ImageService(object):
@@ -179,6 +183,23 @@ class S3ImageService(object):
         if CONF.s3_affix_tenant:
             access = '%s:%s' % (access, context.project_id)
         secret = CONF.s3_secret_key
+
+        if CONF.auth_strategy == 'keystone':
+            from keystoneclient.v2_0.client import Client
+            c = Client(token=context.auth_token,
+                       tenant_id=context.project_id,
+                       auth_url=CONF.keystone_auth_url)
+            ec2_creds = c.ec2.list(c.auth_user_id)
+            access = None
+            secret = None
+            for cred in ec2_creds:
+                if cred.tenant_id == context.project_id:
+                    access = cred.access
+                    secret = cred.secret
+                    break
+            if not access:
+                raise exception.Error("Couldn't find EC2 credentials")
+
         calling = boto.s3.connection.OrdinaryCallingFormat()
         return boto.s3.connection.S3Connection(aws_access_key_id=access,
                                                aws_secret_access_key=secret,
