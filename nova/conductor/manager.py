@@ -34,6 +34,7 @@ from nova import network
 from nova.network.security_group import openstack_driver
 from nova import notifications
 from nova.objects import base as nova_object
+from nova.objects import block_device as block_device_obj
 from nova.objects import instance as instance_obj
 from nova.objects import migration as migration_obj
 from nova.objects import quotas as quotas_obj
@@ -296,9 +297,9 @@ class ConductorManager(manager.Manager):
             bdm = self.db.block_device_mapping_update(context,
                                                       values['id'],
                                                       values)
-        # NOTE:comstud): 'bdm' is always in the new format, so we
-        # account for this in cells/messaging.py
-        self.cells_rpcapi.bdm_update_or_create_at_top(context, bdm,
+        bdm_obj = block_device_obj.BlockDeviceMapping._from_db_object(
+                context, block_device_obj.BlockDeviceMapping(), bdm)
+        self.cells_rpcapi.bdm_update_or_create_at_top(context, bdm_obj,
                                                       create=create)
 
     def block_device_mapping_get_all_by_instance(self, context, instance,

@@ -36,6 +36,7 @@ from nova.db.sqlalchemy import models
 from nova import exception as exc
 from nova import notifications
 from nova.objects import base as obj_base
+from nova.objects import block_device as block_device_obj
 from nova.objects import fields
 from nova.objects import instance as instance_obj
 from nova.objects import migration as migration_obj
@@ -48,6 +49,7 @@ from nova.scheduler import utils as scheduler_utils
 from nova import test
 from nova.tests import cast_as_call
 from nova.tests.compute import test_compute
+from nova.tests import fake_block_device
 from nova.tests import fake_instance
 from nova.tests import fake_instance_actions
 from nova.tests import fake_notifier
@@ -579,8 +581,14 @@ class ConductorTestCase(_BaseTestCase, test.TestCase):
         self.assertEqual(result, 'result')
 
     def test_block_device_mapping_update_or_create(self):
-        fake_bdm = {'id': 'fake-id', 'device_name': 'foo'}
-        fake_bdm2 = {'id': 'fake-id', 'device_name': 'foo2'}
+        fake_bdm = {'id': 1, 'device_name': 'foo',
+                    'source_type': 'volume', 'volume_id': 'fake-vol-id',
+                    'destination_type': 'volume'}
+        fake_bdm = fake_block_device.FakeDbBlockDeviceDict(fake_bdm)
+        fake_bdm2 = {'id': 1, 'device_name': 'foo2',
+                     'source_type': 'volume', 'volume_id': 'fake-vol-id',
+                     'destination_type': 'volume'}
+        fake_bdm2 = fake_block_device.FakeDbBlockDeviceDict(fake_bdm2)
         cells_rpcapi = self.conductor.cells_rpcapi
         self.mox.StubOutWithMock(db, 'block_device_mapping_create')
         self.mox.StubOutWithMock(db, 'block_device_mapping_update')
@@ -589,18 +597,14 @@ class ConductorTestCase(_BaseTestCase, test.TestCase):
                                  'bdm_update_or_create_at_top')
         db.block_device_mapping_create(self.context,
                                        fake_bdm).AndReturn(fake_bdm2)
-        cells_rpcapi.bdm_update_or_create_at_top(self.context, fake_bdm2,
-                                                 create=True)
+        cells_rpcapi.bdm_update_or_create_at_top(
+                self.context, mox.IsA(block_device_obj.BlockDeviceMapping),
+                create=True)
         db.block_device_mapping_update(self.context, fake_bdm['id'],
                                        fake_bdm).AndReturn(fake_bdm2)
-        cells_rpcapi.bdm_update_or_create_at_top(self.context,
-                                                 fake_bdm2,
-                                                 create=False)
-        db.block_device_mapping_update_or_create(
-                self.context, fake_bdm).AndReturn(fake_bdm2)
-        cells_rpcapi.bdm_update_or_create_at_top(self.context,
-                                                 fake_bdm2,
-                                                 create=None)
+        cells_rpcapi.bdm_update_or_create_at_top(
+                self.context, mox.IsA(block_device_obj.BlockDeviceMapping),
+                create=False)
         self.mox.ReplayAll()
         self.conductor.block_device_mapping_update_or_create(self.context,
                                                              fake_bdm,
@@ -608,8 +612,6 @@ class ConductorTestCase(_BaseTestCase, test.TestCase):
         self.conductor.block_device_mapping_update_or_create(self.context,
                                                              fake_bdm,
                                                              create=False)
-        self.conductor.block_device_mapping_update_or_create(self.context,
-                                                             fake_bdm)
 
     def test_instance_get_all_by_filters(self):
         filters = {'foo': 'bar'}
@@ -880,9 +882,17 @@ class ConductorRPCAPITestCase(_BaseTestCase, test.TestCase):
         self.mox.StubOutWithMock(db, 'block_device_mapping_create')
         self.mox.StubOutWithMock(db, 'block_device_mapping_update')
         self.mox.StubOutWithMock(db, 'block_device_mapping_update_or_create')
+        self.mox.StubOutWithMock(block_device_obj.BlockDeviceMapping,
+                                 '_from_db_object')
         db.block_device_mapping_create(self.context, fake_bdm)
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
         db.block_device_mapping_update(self.context, fake_bdm['id'], fake_bdm)
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
         db.block_device_mapping_update_or_create(self.context, fake_bdm)
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
         self.mox.ReplayAll()
         self.conductor.block_device_mapping_update_or_create(self.context,
                                                              fake_bdm,
@@ -1019,10 +1029,18 @@ class ConductorAPITestCase(_BaseTestCase, test.TestCase):
         self.mox.StubOutWithMock(db, 'block_device_mapping_create')
         self.mox.StubOutWithMock(db, 'block_device_mapping_update')
         self.mox.StubOutWithMock(db, 'block_device_mapping_update_or_create')
+        self.mox.StubOutWithMock(block_device_obj.BlockDeviceMapping,
+                                 '_from_db_object')
         db.block_device_mapping_create(self.context, 'fake-bdm')
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
         db.block_device_mapping_update(self.context,
                                        'fake-id', {'id': 'fake-id'})
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
         db.block_device_mapping_update_or_create(self.context, 'fake-bdm')
+        block_device_obj.BlockDeviceMapping._from_db_object(
+                self.context, mox.IgnoreArg(), mox.IgnoreArg())
 
         self.mox.ReplayAll()
         self.conductor.block_device_mapping_create(self.context, 'fake-bdm')
