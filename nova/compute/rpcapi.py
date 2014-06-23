@@ -499,6 +499,8 @@ class ComputeAPI(object):
             # NOTE(russellb) Havana compat
             version = self._get_compat_version('3.0', '2.26')
             instance = jsonutils.to_primitive(instance)
+            if 'metadata' not in instance:
+                instance['metadata'] = {}
         cctxt = self.client.prepare(server=_compute_host(None, instance),
                 version=version)
         return cctxt.call(ctxt, 'validate_console_port',
