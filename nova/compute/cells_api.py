@@ -292,6 +292,13 @@ class ComputeCellsAPI(compute_api.API):
         self._cast_to_cells(context, instance, 'force_delete')
 
     @check_instance_cell
+    def rebuild(self, context, instance, *args, **kwargs):
+        """Rebuild the given instance with the provided attributes."""
+        super(ComputeCellsAPI, self).rebuild(context, instance, *args,
+                **kwargs)
+        self._cast_to_cells(context, instance, 'rebuild', *args, **kwargs)
+
+    @check_instance_cell
     def evacuate(self, context, instance, *args, **kwargs):
         """Evacuate the given instance with the provided attributes."""
         super(ComputeCellsAPI, self).evacuate(context, instance, *args,
