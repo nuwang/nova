@@ -963,14 +963,15 @@ def get_dns_hosts(context, network_ref):
     return '\n'.join(hosts)
 
 
-def _add_dnsmasq_accept_rules(dev):
+def _add_dnsmasq_accept_rules(dev, network_ref):
     """Allow DHCP and DNS traffic through to dnsmasq."""
     table = iptables_manager.ipv4['filter']
     for port in [67, 53]:
         for proto in ['udp', 'tcp']:
-            args = {'dev': dev, 'port': port, 'proto': proto}
+            args = {'dev': dev, 'port': port, 'proto': proto,
+                    'cidr': network_ref['cidr']}
             table.add_rule('INPUT',
-                           '-i %(dev)s -p %(proto)s -m %(proto)s '
+                           '-s %(cidr)s -i %(dev)s -p %(proto)s -m %(proto)s '
                            '--dport %(port)s -j ACCEPT' % args)
     iptables_manager.apply()
 
@@ -1109,7 +1110,7 @@ def restart_dhcp(context, dev, network_ref, fixedips):
         if is_pid_cmdline_correct(pid, conffile.split('/')[-1]):
             try:
                 _execute('kill', '-HUP', pid, run_as_root=True)
-                _add_dnsmasq_accept_rules(dev)
+                _add_dnsmasq_accept_rules(dev, network_ref)
                 return
             except Exception as exc:
                 LOG.error(_LE('kill -HUP dnsmasq threw %s'), exc)
@@ -1158,7 +1159,7 @@ def restart_dhcp(context, dev, network_ref, fixedips):
 
     _execute(*cmd, run_as_root=True)
 
-    _add_dnsmasq_accept_rules(dev)
+    _add_dnsmasq_accept_rules(dev, network_ref)
 
 
 @utils.synchronized('radvd_start')
