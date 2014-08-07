@@ -875,6 +875,9 @@ class NetworkManager(manager.Manager):
                         context.elevated(), network['id'], instance_id)
                 vif = vif_obj.VirtualInterface.get_by_instance_and_network(
                         context, instance_id, network['id'])
+                if not vif:
+                    vif = self._add_virtual_interface(
+                        context, instance_id, network['id'])
                 fip.allocated = True
                 fip.virtual_interface_id = vif.id
                 fip.save()
