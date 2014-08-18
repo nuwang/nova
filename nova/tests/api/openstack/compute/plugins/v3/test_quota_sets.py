@@ -232,6 +232,8 @@ class QuotaSetsTest(test.TestCase):
 
         self.stubs.Set(quotas.QuotaSetsController, '_get_quotas',
                        fake_get_quotas)
+        self.stubs.Set(quotas.QuotaSetsController, '_get_settable_quotas',
+                       fake_get_settable_quotas)
         req = fakes.HTTPRequestV3.blank('/os-quota-sets/update_me',
                                       use_admin_context=True)
         self.assertRaises(webob.exc.HTTPBadRequest, self.controller.update,
@@ -241,6 +243,8 @@ class QuotaSetsTest(test.TestCase):
         id = 'update_me'
         self.stubs.Set(quotas.QuotaSetsController, '_get_quotas',
                        fake_get_quotas)
+        self.stubs.Set(quotas.QuotaSetsController, '_get_settable_quotas',
+                       fake_get_settable_quotas)
         req = fakes.HTTPRequestV3.blank('/os-quota-sets/' + id,
                                       use_admin_context=True)
         expected = {'quota_set': {'ram': 25600, 'instances': 200, 'cores': 10,
@@ -342,3 +346,17 @@ def fake_get_quotas(self, context, id, user_id=None, usages=False):
         return fake_quotas
     else:
         return dict((k, v['limit']) for k, v in fake_quotas.items())
+
+
+def fake_get_settable_quotas(self, context, project_id, user_id=None):
+    return {
+        'ram': {'minimum': fake_quotas['ram']['in_use'] +
+                           fake_quotas['ram']['reserved'],
+                'maximum': -1},
+        'cores': {'minimum': fake_quotas['cores']['in_use'] +
+                             fake_quotas['cores']['reserved'],
+                  'maximum': -1},
+        'instances': {'minimum': fake_quotas['instances']['in_use'] +
+                                 fake_quotas['instances']['reserved'],
+                      'maximum': -1},
+    }

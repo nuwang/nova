@@ -77,6 +77,9 @@ class QuotaSetsController(wsgi.Controller):
         else:
             return dict((k, v['limit']) for k, v in values.items())
 
+    def _get_settable_quotas(self, context, project_id, user_id=None):
+        return QUOTAS.get_settable_quotas(context, project_id, user_id=user_id)
+
     @extensions.expected_errors(403)
     def show(self, req, id):
         context = req.environ['nova.context']
@@ -140,8 +143,8 @@ class QuotaSetsController(wsgi.Controller):
             raise webob.exc.HTTPBadRequest(explanation=msg)
 
         try:
-            settable_quotas = QUOTAS.get_settable_quotas(context, project_id,
-                                                         user_id=user_id)
+            settable_quotas = self._get_settable_quotas(context, project_id,
+                                                        user_id=user_id)
         except exception.NotAuthorized:
             raise webob.exc.HTTPForbidden()
 
@@ -177,9 +180,11 @@ class QuotaSetsController(wsgi.Controller):
                                  'quota_used': quota_used})
                         raise webob.exc.HTTPBadRequest(explanation=msg)
 
-            minimum = settable_quotas[key]['minimum']
-            maximum = settable_quotas[key]['maximum']
-            self._validate_quota_limit(value, minimum, maximum)
+            if force_update is not True:
+                minimum = settable_quotas[key]['minimum']
+                maximum = settable_quotas[key]['maximum']
+                self._validate_quota_limit(value, minimum, maximum)
+
             try:
                 db.quota_create(context, project_id, key, value,
                                 user_id=user_id)
