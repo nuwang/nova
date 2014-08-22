@@ -673,11 +673,16 @@ class CellsManager(manager.Manager):
                 instance_uuid, group_p)
 
     def instance_remove_security_group(self, ctxt, instance_uuid, group_id):
-        group = self.db.security_group_get(ctxt.elevated(), group_id)
-        group_p = {'project_id': group['project_id'],
-                   'name': group['name']}
-        self.msg_runner.instance_remove_security_group(ctxt,
-                instance_uuid, group_p)
+        try:
+            group = self.db.security_group_get(ctxt.elevated(), group_id)
+            group_p = {'project_id': group['project_id'],
+                       'name': group['name']}
+            self.msg_runner.instance_remove_security_group(ctxt,
+                    instance_uuid, group_p)
+        except exception.SecurityGroupNotFound:
+            # If group is deleted then we can assume it's not attached to
+            # an instance anymore
+            pass
 
     def ec2_instance_create(self, ctxt, instance_uuid, ec2_id):
         self.msg_runner.ec2_instance_create(ctxt, instance_uuid, ec2_id)
