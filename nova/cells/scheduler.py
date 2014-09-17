@@ -277,24 +277,22 @@ class CellsScheduler(base.Base):
         try:
             for i in xrange(max(0, CONF.cells.scheduler_retries) + 1):
                 try:
-                    target_cells = self._grab_target_cells(filter_properties)
-                    if target_cells is None:
-                        # a filter took care of scheduling.  skip.
-                        return
 
                     if self.state_manager.get_child_cells():
                         instances = method_kwargs.get('instances', [])
-                        availability_zone = [i.get('availability_zone', None)
-                                             for i in instances]
-
+                        availability_zone = [ins.get('availability_zone', None)
+                                             for ins in instances]
                         our_azs = self.state_manager.get_my_state()\
-                            .capabilities.get('availability_zones', [])
+                                    .capabilities.get('availability_zones', [])
 
                         # Try deprecated scheduler hint
                         if not any(availability_zone):
-                            filter_props = method_kwargs.get('scheduler_hints', {})
-                            scheduler_hints = filter_props.get('scheduler_hints', {})
-                            availability_zone = scheduler_hints.get('cell', None)
+                            filter_props = method_kwargs.get(
+                                'scheduler_hints', {})
+                            scheduler_hints = filter_props.get(
+                                'scheduler_hints', {})
+                            availability_zone = scheduler_hints.get(
+                                'cell', None)
                             cell_scheduled = scheduler_hints.pop('cell', None)
                             if scheduler_hints and cell_scheduled in our_azs:
                                 scheduler_hints.pop('cell')
@@ -305,6 +303,12 @@ class CellsScheduler(base.Base):
                             az = instance.get('availability_zone', None)
                             if az in our_azs:
                                 instance.pop('availability_zone')
+                                filter_properties['request_spec']['instance_properties']['availability_zone'] = None
+
+                    target_cells = self._grab_target_cells(filter_properties)
+                    if target_cells is None:
+                        # a filter took care of scheduling.  skip.
+                        return
 
                     return method(message, target_cells, instance_uuids,
                             method_kwargs)
