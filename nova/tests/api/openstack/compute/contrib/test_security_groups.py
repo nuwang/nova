@@ -388,7 +388,7 @@ class TestSecurityGroups(test.TestCase):
                                       ('fake', FAKE_UUID1))
         res_dict = self.server_controller.index(req, FAKE_UUID1)
         self.assertEqual(expected, res_dict)
-        mock_sec_group.assert_called_once_with(req.environ['nova.context'],
+        mock_sec_group.assert_called_once_with(mock.ANY,
                                                FAKE_UUID1)
 
     def test_get_security_group_by_instance_non_existing(self):
