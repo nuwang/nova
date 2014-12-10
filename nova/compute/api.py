@@ -1490,14 +1490,15 @@ class API(base.Base):
                     is_up = True
 
                     if original_task_state in (task_states.DELETING,
-                                                  task_states.SOFT_DELETING):
-                        LOG.info(_('Instance is already in deleting state, '
-                                   'ignoring this request'), instance=instance)
-                        if reservations:
-                            QUOTAS.rollback(context, reservations,
-                                            project_id=project_id,
-                                            user_id=user_id)
-                        return
+                                               task_states.SOFT_DELETING):
+                        if not CONF.upgrade_levels.compute == 'icehouse-compat':
+                            LOG.info(_('Instance is already in deleting state, '
+                                       'ignoring this request'), instance=instance)
+                            if reservations:
+                                QUOTAS.rollback(context, reservations,
+                                                project_id=project_id,
+                                                user_id=user_id)
+                            return
 
                     self._record_action_start(context, instance,
                                               instance_actions.DELETE)
