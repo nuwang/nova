@@ -238,7 +238,7 @@ class API(object):
                     context, instance)
             else:
                 instance_az = instance['availability_zone']
-            if instance_az != volume['availability_zone']:
+            if not instance_az.startswith(volume['availability_zone']):
                 msg = _("Instance and volume not in same availability_zone")
                 raise exception.InvalidVolume(reason=msg)
 
