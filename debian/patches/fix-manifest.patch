@@ -1,0 +1,70 @@
+diff --git a/MANIFEST.in b/MANIFEST.in
+index c978a52..e1841f5 100644
+--- a/MANIFEST.in
++++ b/MANIFEST.in
+@@ -3,4 +3,65 @@ include ChangeLog
+ exclude .gitignore
+ exclude .gitreview
+ 
++include nova/db/sqlalchemy/migrate_repo/README
++include nova/db/sqlalchemy/migrate_repo/migrate.cfg
++include nova/db/sqlalchemy/migrate_repo/versions/246_sqlite_upgrade.sql
++include nova/db/sqlalchemy/migrate_repo/versions/246_sqlite_downgrade.sql
++include nova/console/xvp.conf.template
++include nova/virt/interfaces.template
++include nova/virt/hyperv/README.rst
++include nova/virt/baremetal/pxe_config.template
++include nova/virt/baremetal/net-static.ubuntu.template
++include nova/virt/baremetal/net-dhcp.ubuntu.template
++include nova/virt/baremetal/db/sqlalchemy/migrate_repo/migrate.cfg
++include nova/virt/baremetal/doc/README.rst
++include nova/locale/nova-log-info.pot
++include nova/locale/nova-log-error.pot
++include nova/locale/nova.pot
++include nova/locale/nova-log-critical.pot
++include nova/locale/nova-log-warning.pot
++include nova/locale/zh_CN/LC_MESSAGES/nova-log-critical.po
++include nova/locale/zh_CN/LC_MESSAGES/nova-log-info.po
++include nova/locale/it/LC_MESSAGES/nova-log-info.po
++include nova/locale/pt_BR/LC_MESSAGES/nova-log-info.po
++include nova/locale/ko_KR/LC_MESSAGES/nova-log-info.po
++include nova/locale/es/LC_MESSAGES/nova.po
++include nova/locale/es/LC_MESSAGES/nova-log-critical.po
++include nova/locale/es/LC_MESSAGES/nova-log-error.po
++include nova/locale/es/LC_MESSAGES/nova-log-info.po
++include nova/locale/es/LC_MESSAGES/nova-log-warning.po
++include nova/locale/en_GB/LC_MESSAGES/nova-log-info.po
++include nova/locale/zh_TW/LC_MESSAGES/nova-log-info.po
++include nova/locale/fr/LC_MESSAGES/nova-log-critical.po
++include nova/locale/fr/LC_MESSAGES/nova-log-error.po
++include nova/locale/fr/LC_MESSAGES/nova-log-info.po
++include nova/locale/fr/LC_MESSAGES/nova-log-warning.po
++include nova/locale/en_US/LC_MESSAGES/nova.po
++include nova/locale/ja/LC_MESSAGES/nova-log-info.po
++include nova/compute/fakevirtinstance.xml
++include nova/cloudpipe/bootscript.template
++include nova/cloudpipe/client.ovpn.template
++include nova/api/openstack/compute/schemas/atom.rng
++include nova/api/openstack/compute/schemas/atom-link.rng
++include nova/api/openstack/compute/schemas/v1.1/limits.rng
++include nova/api/openstack/compute/schemas/v1.1/extensions.rng
++include nova/api/openstack/compute/schemas/v1.1/flavors.rng
++include nova/api/openstack/compute/schemas/v1.1/images.rng
++include nova/api/openstack/compute/schemas/v1.1/servers.rng
++include nova/api/openstack/compute/schemas/v1.1/image.rng
++include nova/api/openstack/compute/schemas/v1.1/servers_index.rng
++include nova/api/openstack/compute/schemas/v1.1/version.rng
++include nova/api/openstack/compute/schemas/v1.1/images_index.rng
++include nova/api/openstack/compute/schemas/v1.1/extension.rng
++include nova/api/openstack/compute/schemas/v1.1/flavors_index.rng
++include nova/api/openstack/compute/schemas/v1.1/metadata.rng
++include nova/api/openstack/compute/schemas/v1.1/addresses.rng
++include nova/api/openstack/compute/schemas/v1.1/flavor.rng
++include nova/api/openstack/compute/schemas/v1.1/versions.rng
++include nova/api/openstack/compute/schemas/v1.1/server.rng
++include nova/openstack/common/README
++include nova/CA/openssl.cnf.tmpl
++include nova/CA/geninter.sh
++include nova/CA/genrootca.sh
++
+ global-exclude *.pyc

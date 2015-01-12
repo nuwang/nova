@@ -5,3 +5,5 @@ update-run-tests.patch
 skip-ubuntu-tests.patch
 disable-websockify-tests.patch
 neutron-floating-ip-list.patch
+# NeCTAR
+fix-manifest.patch
