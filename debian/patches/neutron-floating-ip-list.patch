@@ -17,11 +17,9 @@ Closes-Bug: #1380965
  nova/api/openstack/compute/contrib/floating_ips.py |    7 ++++++-
  1 file changed, 6 insertions(+), 1 deletion(-)
 
-diff --git a/nova/api/openstack/compute/contrib/floating_ips.py b/nova/api/openstack/compute/contrib/floating_ips.py
-index 19a31ae..3d5762c 100644
 --- a/nova/api/openstack/compute/contrib/floating_ips.py
 +++ b/nova/api/openstack/compute/contrib/floating_ips.py
-@@ -71,7 +71,12 @@ def _translate_floating_ip_view(floating_ip):
+@@ -71,7 +71,12 @@
      except (TypeError, KeyError, AttributeError):
          result['fixed_ip'] = None
      try:
@@ -35,6 +33,3 @@ index 19a31ae..3d5762c 100644
      except (TypeError, KeyError, AttributeError):
          result['instance_id'] = None
      return {'floating_ip': result}
--- 
-1.7.9.5
-
