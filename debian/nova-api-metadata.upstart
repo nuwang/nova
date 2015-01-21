@@ -13,6 +13,7 @@ pre-start script
 
 	mkdir -p /var/lock/nova
 	chown nova:root /var/lock/nova/
+    sleep 5
 end script
 
 exec start-stop-daemon --start --chuid nova --exec /usr/bin/nova-api-metadata -- --config-file=/etc/nova/nova.conf
