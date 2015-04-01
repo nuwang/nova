@@ -25,7 +25,7 @@ Forwarded: Not-Needed
              'host': self._get_host(),
 --- a/nova/tests/test_wsgi.py
 +++ b/nova/tests/test_wsgi.py
-@@ -256,7 +256,10 @@
+@@ -286,7 +286,10 @@
  
          server.start()
  
