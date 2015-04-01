@@ -670,7 +670,10 @@ class CellsManager(manager.Manager):
                 instance_uuid, group_p)
 
     def instance_remove_security_group(self, ctxt, instance_uuid, group_id):
-        group = self.db.security_group_get(ctxt.elevated(), group_id)
+        try:
+            group = self.db.security_group_get(ctxt.elevated(), group_id)
+        except exception.SecurityGroupNotFound:
+            return
         group_p = {'project_id': group['project_id'],
                    'name': group['name']}
         self.msg_runner.instance_remove_security_group(ctxt,
