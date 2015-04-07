@@ -497,6 +497,9 @@ class CellsManager(manager.Manager):
         """Start an instance in its cell."""
         self.msg_runner.start_instance(ctxt, instance)
 
+    def external_instance_event(self, ctxt, instances, events):
+        self.msg_runner.external_instance_event(ctxt, instances, events)
+
     def stop_instance(self, ctxt, instance, do_cast=True):
         """Stop an instance in its cell."""
         response = self.msg_runner.stop_instance(ctxt, instance,
