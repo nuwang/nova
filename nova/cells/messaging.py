@@ -879,6 +879,10 @@ class _TargetedMessageMethods(_BaseMessageMethods):
                                                'stop', do_cast=do_cast,
                                                clean_shutdown=clean_shutdown)
 
+    def external_instance_event(self, message, instances, events):
+        return self.compute_api.external_instance_event(message.ctxt,
+                                                        instances, events)
+
     def reboot_instance(self, message, instance, reboot_type):
         """Reboot an instance via compute_api.reboot()."""
         self._call_compute_api_with_obj(message.ctxt, instance, 'reboot',
@@ -2102,6 +2106,14 @@ class MessageRunner(object):
     def set_admin_password(self, ctxt, instance, new_pass):
         self._instance_action(ctxt, instance, 'set_admin_password',
                 extra_kwargs={'new_pass': new_pass})
+
+    def external_instance_event(self, ctxt, instances, events):
+        method_kwargs = dict(instances=instances,
+                             events=events)
+        message = _TargetedMessage(self, ctxt, 'external_instance_event',
+                                   method_kwargs, 'down',
+                                   instances[0].cell_name, need_response=False)
+        return message.process()
 
     def create_aggregate(self, ctxt, cell_name, aggregate_name,
                          availability_zone):
