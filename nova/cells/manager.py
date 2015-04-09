@@ -553,6 +553,15 @@ class CellsManager(manager.Manager):
         self.msg_runner.resize_instance(ctxt, instance,
                                         flavor, extra_instance_updates)
 
+    def attach_interface(self, ctxt, instance, network_id,
+                         port_id, requested_ip):
+        response = self.msg_runner.attach_interface(ctxt, instance,
+                                network_id, port_id, requested_ip)
+	return response.value_or_raise()
+
+    def detach_interface(self, ctxt, instance, port_id):
+        self.msg_runner.detach_interface(ctxt, instance, port_id)
+
     def live_migrate_instance(self, ctxt, instance, block_migration,
                               disk_over_commit, host_name):
         """Live migrate an instance in its cell."""
