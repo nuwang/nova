@@ -124,6 +124,7 @@ CONF = cfg.CONF
 CONF.register_opts(neutron_opts, 'neutron')
 CONF.import_opt('default_floating_pool', 'nova.network.floating_ips')
 CONF.import_opt('flat_injected', 'nova.network.manager')
+CONF.import_opt('compute_driver', 'nova.virt.driver')
 LOG = logging.getLogger(__name__)
 
 soft_external_network_attach_authorize = extensions.soft_core_authorizer(
@@ -1365,6 +1366,16 @@ class API(base_api.NetworkAPI):
         for current_neutron_port in current_neutron_ports:
             current_neutron_port_map[current_neutron_port['id']] = (
                 current_neutron_port)
+
+        # NeCTAR hack for novanet2neutron migration
+        # if network_info doesn't exist then get fresh from neutron
+        if CONF.compute_driver == 'fake.FakeDriver':
+            for port in current_neutron_ports:
+                if port['id'] not in port_ids:
+                    port_ids.append(port['id'])
+                neutron_net = client.list_networks(
+                    network_id=port['network_id'])['networks'][0]
+                networks.append(neutron_net)
 
         for port_id in port_ids:
             current_neutron_port = current_neutron_port_map.get(port_id)
