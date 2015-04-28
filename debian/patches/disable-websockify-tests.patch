@@ -1,9 +1,11 @@
+diff --git a/nova/tests/console/test_websocketproxy.py b/nova/tests/console/test_websocketproxy.py
+index 66913c2..04f6aa2 100644
 --- a/nova/tests/console/test_websocketproxy.py
 +++ b/nova/tests/console/test_websocketproxy.py
-@@ -16,13 +16,19 @@
- 
+@@ -17,8 +17,13 @@
  
  import mock
+ from oslo.config import cfg
 +import testtools
 +
 +try:
@@ -12,8 +14,10 @@
 +    websocketproxy = None
  
 -from nova.console import websocketproxy
+ from nova import exception
  from nova import test
  
+@@ -27,6 +32,7 @@ CONF = cfg.CONF
  
  class NovaProxyRequestHandlerBaseTestCase(test.TestCase):
  
