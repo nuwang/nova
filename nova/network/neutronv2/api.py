@@ -32,6 +32,7 @@ from oslo_utils import uuidutils
 import six
 
 from nova.api.openstack import extensions
+from nova import availability_zones as az
 from nova.compute import utils as compute_utils
 from nova import exception
 from nova.i18n import _, _LE, _LI, _LW
@@ -638,7 +639,8 @@ class API(base_api.NetworkAPI):
 
                 raise exception.SecurityGroupCannotBeApplied()
             request.network_id = network['id']
-            zone = 'compute:%s' % instance.availability_zone
+            zone = 'compute:%s' % az.get_instance_availability_zone(context,
+                                                                    instance)
             port_req_body = {'port': {'device_id': instance.uuid,
                                       'device_owner': zone}}
             try:
@@ -900,7 +902,8 @@ class API(base_api.NetworkAPI):
             raise exception.NetworkNotFoundForInstance(
                 instance_id=instance.uuid)
 
-        zone = 'compute:%s' % instance.availability_zone
+        zone = 'compute:%s' % az.get_instance_availability_zone(context,
+                                                                instance)
         search_opts = {'device_id': instance.uuid,
                        'device_owner': zone,
                        'network_id': network_id}
@@ -928,7 +931,8 @@ class API(base_api.NetworkAPI):
     def remove_fixed_ip_from_instance(self, context, instance, address):
         """Remove a fixed ip from the instance."""
         neutron = get_client(context)
-        zone = 'compute:%s' % instance.availability_zone
+        zone = 'compute:%s' % az.get_instance_availability_zone(context,
+                                                                instance)
         search_opts = {'device_id': instance.uuid,
                        'device_owner': zone,
                        'fixed_ips': 'ip_address=%s' % address}
@@ -1147,10 +1151,11 @@ class API(base_api.NetworkAPI):
         return [{'instance_uuid': port['device_id']} for port in ports
                 if port['device_id']]
 
-    def _get_port_id_by_fixed_address(self, client,
+    def _get_port_id_by_fixed_address(self, context, client,
                                       instance, address):
         """Return port_id from a fixed address."""
-        zone = 'compute:%s' % instance.availability_zone
+        zone = 'compute:%s' % az.get_instance_availability_zone(context,
+                                                                instance)
         search_opts = {'device_id': instance.uuid,
                        'device_owner': zone}
         data = client.list_ports(**search_opts)
@@ -1176,7 +1181,7 @@ class API(base_api.NetworkAPI):
         # find why this parameter exists.
 
         client = get_client(context)
-        port_id = self._get_port_id_by_fixed_address(client, instance,
+        port_id = self._get_port_id_by_fixed_address(context, client, instance,
                                                      fixed_address)
         fip = self._get_floating_ip_by_address(client, floating_address)
         param = {'port_id': port_id,

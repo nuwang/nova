@@ -3259,6 +3259,7 @@ class TestNeutronv2WithMock(test.TestCase):
     def test_unbind_ports(self, mock_neutron, mock_has_ext):
         self._test_unbind_ports(mock_neutron, mock_has_ext, False)
 
+    @mock.patch('nova.network.neutronv2.api.az.get_instance_availability_zone')
     @mock.patch('nova.network.neutronv2.api.API.get_instance_nw_info')
     @mock.patch('nova.network.neutronv2.api.excutils')
     @mock.patch('nova.network.neutronv2.api.API._delete_ports')
@@ -3280,7 +3281,8 @@ class TestNeutronv2WithMock(test.TestCase):
                                           mock_cena,
                                           mock_del_ports,
                                           mock_exeu,
-                                          mock_giwn):
+                                          mock_giwn,
+                                          mock_az):
         mock_nc = mock.Mock()
 
         def show_port(port_id):
@@ -3291,7 +3293,6 @@ class TestNeutronv2WithMock(test.TestCase):
         mock_ntrn.return_value = mock_nc
         mock_nc.update_port.side_effect = [True, True, Exception]
         mock_inst = mock.Mock(project_id="proj-1",
-                              availability_zone='zone-1',
                               uuid='inst-1')
         mock_has_pbe.return_value = False
         nw_req = objects.NetworkRequestList(
@@ -3299,10 +3300,11 @@ class TestNeutronv2WithMock(test.TestCase):
                        objects.NetworkRequest(port_id='fake-port2'),
                        objects.NetworkRequest(port_id='fail-port')])
         mock_avail_nets.return_value = [{'id': 'net-1'}]
+        mock_az.return_value = 'zone-1'
 
         self.api.allocate_for_instance(mock.sentinel.ctx,
-                                  mock_inst,
-                                  requested_networks=nw_req)
+                                       mock_inst,
+                                       requested_networks=nw_req)
 
         mock_unbind.assert_called_once_with(mock.sentinel.ctx,
                                             ['fake-port1', 'fake-port2'],
