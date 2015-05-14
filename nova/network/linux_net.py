@@ -97,6 +97,9 @@ linux_net_opts = [
                 default=False,
                 help='Use single default gateway. Only first nic of vm will '
                      'get default gateway from dhcp server'),
+    cfg.BoolOpt('disable_dhcp_opts',
+                default=False,
+                help="Don't use dhcp_opts file for dnsmasq"),
     cfg.MultiStrOpt('forward_bridge_interface',
                     default=['all'],
                     help='An interface that bridges can forward to. If this '
@@ -1094,7 +1097,6 @@ def restart_dhcp(context, dev, network_ref, fixedips):
            '--bind-interfaces',
            '--conf-file=%s' % CONF.dnsmasq_config_file,
            '--pid-file=%s' % _dhcp_file(dev, 'pid'),
-           '--dhcp-optsfile=%s' % _dhcp_file(dev, 'opts'),
            '--listen-address=%s' % network_ref['dhcp_server'],
            '--except-interface=lo',
            '--dhcp-range=set:%s,%s,static,%s,%ss' %
@@ -1107,6 +1109,9 @@ def restart_dhcp(context, dev, network_ref, fixedips):
            '--dhcp-script=%s' % CONF.dhcpbridge,
            '--no-hosts',
            '--leasefile-ro']
+
+    if not CONF.disable_dhcp_opts:
+        cmd.append('--dhcp-optsfile=%s' % _dhcp_file(dev, 'opts'))
 
     # dnsmasq currently gives an error for an empty domain,
     # rather than ignoring.  So only specify it if defined.
