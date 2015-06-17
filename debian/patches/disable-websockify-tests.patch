@@ -1,5 +1,3 @@
-diff --git a/nova/tests/console/test_websocketproxy.py b/nova/tests/console/test_websocketproxy.py
-index 66913c2..04f6aa2 100644
 --- a/nova/tests/console/test_websocketproxy.py
 +++ b/nova/tests/console/test_websocketproxy.py
 @@ -17,8 +17,13 @@
@@ -17,7 +15,7 @@ index 66913c2..04f6aa2 100644
  from nova import exception
  from nova import test
  
-@@ -27,6 +32,7 @@ CONF = cfg.CONF
+@@ -27,6 +32,7 @@
  
  class NovaProxyRequestHandlerBaseTestCase(test.TestCase):
  

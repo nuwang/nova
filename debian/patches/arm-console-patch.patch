@@ -20,7 +20,7 @@
          self.assertIsInstance(cfg.devices[0],
 --- a/nova/virt/libvirt/driver.py
 +++ b/nova/virt/libvirt/driver.py
-@@ -3769,7 +3769,7 @@
+@@ -3810,7 +3810,7 @@
          disk_mapping = disk_info['mapping']
          img_meta_prop = image_meta.get('properties', {}) if image_meta else {}
  

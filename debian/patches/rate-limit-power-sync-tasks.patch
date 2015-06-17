@@ -44,7 +44,7 @@ Note: Test file name is different in this patch vs cherry-picked version
      cfg.IntOpt("heal_instance_info_cache_interval",
                 default=60,
                 help="Number of seconds between instance info_cache self "
-@@ -628,7 +633,8 @@
+@@ -635,7 +640,8 @@
          self.scheduler_rpcapi = scheduler_rpcapi.SchedulerAPI()
          self._resource_tracker_dict = {}
          self.instance_events = InstanceEvents()
@@ -54,7 +54,7 @@ Note: Test file name is different in this patch vs cherry-picked version
          self._syncs_in_progress = {}
  
          super(ComputeManager, self).__init__(service_name="compute",
-@@ -5736,33 +5742,39 @@
+@@ -5775,33 +5781,39 @@
                       {'num_db_instances': num_db_instances,
                        'num_vm_instances': num_vm_instances})
  
