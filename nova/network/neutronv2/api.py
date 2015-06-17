@@ -108,6 +108,10 @@ neutron_opts = [
                      ' extensions',
                deprecated_group='DEFAULT',
                deprecated_name='neutron_extension_sync_interval'),
+    cfg.ListOpt('default_networks',
+                 default=[],
+                 help='Default networks to attach to if none given in '
+                      'boot request'),
     cfg.StrOpt('ca_certificates_file',
                 help='Location of CA certificates file to use for '
                      'neutron client requests.',
@@ -326,11 +330,17 @@ class API(base_api.NetworkAPI):
             # bug/1267723 - if no network is requested and more
             # than one is available then raise NetworkAmbiguous Exception
             if len(nets) > 1:
-                msg = _("Multiple possible networks found, use a Network "
-                         "ID to be more specific.")
-                raise exception.NetworkAmbiguous(msg)
-            ordered_networks.append(
-                objects.NetworkRequest(network_id=nets[0]['id']))
+                if CONF.neutron.default_networks:
+                    for network_id in CONF.neutron.default_networks:
+                        ordered_networks.append(
+                            objects.NetworkRequest(network_id=network_id))
+                else:
+                    msg = _("Multiple possible networks found, use a Network "
+                            "ID to be more specific.")
+                    raise exception.NetworkAmbiguous(msg)
+            else:
+                ordered_networks.append(
+                    objects.NetworkRequest(network_id=nets[0]['id']))
 
         # NOTE(melwitt): check external net attach permission after the
         #                check for ambiguity, there could be another
