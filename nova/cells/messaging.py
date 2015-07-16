@@ -54,6 +54,7 @@ from nova.db import base
 from nova import exception
 from nova.i18n import _, _LE, _LI, _LW
 from nova.network import model as network_model
+from nova import notifications
 from nova import objects
 from nova.objects import base as objects_base
 from nova import rpc
@@ -1166,6 +1167,7 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
         for key in items_to_remove:
             instance_fault.pop(key, None)
         LOG.debug("Got message to create instance fault: %s", instance_fault)
+        notifications.send_cell_instance_fault(message.ctxt, instance_fault)
         fault = objects.InstanceFault(context=message.ctxt)
         fault.update(instance_fault)
         fault.create()
