@@ -305,6 +305,10 @@ class CellsManager(manager.Manager):
         for response in responses:
             services = response.value_or_raise()
             for service in services:
+                # NOTE(mgagne) Pre-kilo compat support
+                if isinstance(service, dict):
+                    service = objects.Service._from_db_object(
+                        ctxt, objects.Service(), service)
                 service = cells_utils.add_cell_to_service(
                     service, response.cell_name)
                 ret_services.append(service)
@@ -318,6 +322,10 @@ class CellsManager(manager.Manager):
                                                                cell_name,
                                                                host_name)
         service = response.value_or_raise()
+        # NOTE(mgagne) Pre-kilo compat support
+        if isinstance(service, dict):
+            service = objects.Service._from_db_object(
+                ctxt, objects.Service(), service)
         service = cells_utils.add_cell_to_service(service, response.cell_name)
         return service
 
@@ -346,6 +354,10 @@ class CellsManager(manager.Manager):
         response = self.msg_runner.service_update(
             ctxt, cell_name, host_name, binary, params_to_update)
         service = response.value_or_raise()
+        # NOTE(mgagne) Pre-kilo compat support
+        if isinstance(service, dict):
+            service = objects.Service._from_db_object(
+                ctxt, objects.Service(), service)
         service = cells_utils.add_cell_to_service(service, response.cell_name)
         return service
 
@@ -407,6 +419,10 @@ class CellsManager(manager.Manager):
         response = self.msg_runner.compute_node_get(ctxt, cell_name,
                                                     compute_id)
         node = response.value_or_raise()
+        # NOTE(mgagne) Pre-kilo compat support
+        if isinstance(node, dict):
+            node = objects.ComputeNode._from_db_object(
+                ctxt, objects.ComputeNode(), node)
         node = cells_utils.add_cell_to_compute_node(node, cell_name)
         return node
 
@@ -420,6 +436,10 @@ class CellsManager(manager.Manager):
         for response in responses:
             nodes = response.value_or_raise()
             for node in nodes:
+                # NOTE(mgagne) Pre-kilo compat support
+                if isinstance(node, dict):
+                    node = objects.ComputeNode._from_db_object(
+                        ctxt, objects.ComputeNode(), node)
                 node = cells_utils.add_cell_to_compute_node(node,
                                                             response.cell_name)
                 ret_nodes.append(node)
