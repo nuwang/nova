@@ -80,7 +80,8 @@ class CellsScheduler(base.Base):
                 CONF.cells.scheduler_weight_classes)
 
     def _create_instances_here(self, ctxt, instance_uuids, instance_properties,
-            instance_type, image, security_groups, block_device_mapping):
+            instance_type, image, security_groups, block_device_mapping,
+            pci_requests=None):
         instance_values = copy.copy(instance_properties)
         # The parent may pass these metadata values as lists, and the
         # create call expects it to be a dict.
@@ -111,10 +112,13 @@ class CellsScheduler(base.Base):
                     security_groups,
                     block_device_mapping,
                     num_instances, i)
-
+            if pci_requests:
+                pci_requests.instance_uuid = instance.uuid
+                pci_requests.save(ctxt)
             instances.append(instance)
             instance_p = obj_base.obj_to_primitive(instance)
             self.msg_runner.instance_update_at_top(ctxt, instance_p)
+
         return instances
 
     def _create_action_here(self, ctxt, instance_uuids):
@@ -165,6 +169,11 @@ class CellsScheduler(base.Base):
         image = build_inst_kwargs['image']
         security_groups = build_inst_kwargs['security_groups']
         block_device_mapping = build_inst_kwargs['block_device_mapping']
+        try:
+            pci_requests = \
+                    build_inst_kwargs['filter_properties']['pci_requests']
+        except KeyError:
+            pci_requests = None
 
         LOG.debug("Building instances with routing_path=%(routing_path)s",
                   {'routing_path': message.routing_path})
@@ -176,7 +185,8 @@ class CellsScheduler(base.Base):
                     # expects that the instance(s) already exists.
                     instances = self._create_instances_here(ctxt,
                             instance_uuids, instance_properties, instance_type,
-                            image, security_groups, block_device_mapping)
+                            image, security_groups, block_device_mapping,
+                                                            pci_requests)
                     build_inst_kwargs['instances'] = instances
                     # Need to record the create action in the db as the
                     # conductor expects it to already exist.
