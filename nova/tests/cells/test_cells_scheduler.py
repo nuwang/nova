@@ -27,6 +27,7 @@ from nova.compute import vm_states
 from nova import context
 from nova import db
 from nova import exception
+from nova import objects
 from nova.openstack.common import uuidutils
 from nova.scheduler import utils as scheduler_utils
 from nova import test
@@ -136,6 +137,55 @@ class CellsSchedulerTestCase(test.TestCase):
                              instance['display_name'])
             self.assertEqual('fake_image_ref', instance['image_ref'])
 
+    def test_create_instances_here_with_pci(self):
+        # Just grab the first instance type
+        inst_type = db.flavor_get(self.ctxt, 1)
+        image = {'properties': {}}
+        instance_uuids = self.instance_uuids
+        instance_props = {'id': 'removed',
+                          'security_groups': 'removed',
+                          'info_cache': 'removed',
+                          'name': 'instance-00000001',
+                          'hostname': 'meow',
+                          'display_name': 'moo',
+                          'image_ref': 'fake_image_ref',
+                          'user_id': self.ctxt.user_id,
+                          # Test these as lists
+                          'metadata': [{'key': 'moo', 'value': 'cow'}],
+                          'system_metadata': [{'key': 'meow', 'value': 'cat'}],
+                          'project_id': self.ctxt.project_id}
+
+        call_info = {'uuids': []}
+        block_device_mapping = [block_device.create_image_bdm(
+            'fake_image_ref')]
+
+        pci_request = objects.InstancePCIRequest(count=1,
+                                                 spec=[{'vendor_id': '8086'}])
+        pci_requests = objects.InstancePCIRequests(requests=[pci_request])
+
+        def _fake_instance_update_at_top(_ctxt, instance):
+            call_info['uuids'].append(instance['uuid'])
+
+        self.stubs.Set(self.msg_runner, 'instance_update_at_top',
+                       _fake_instance_update_at_top)
+
+        self.scheduler._create_instances_here(self.ctxt, instance_uuids,
+                instance_props, inst_type, image,
+                ['default'], block_device_mapping, pci_requests)
+        self.assertEqual(instance_uuids, call_info['uuids'])
+
+        for instance_uuid in instance_uuids:
+            instance = db.instance_get_by_uuid(self.ctxt, instance_uuid)
+            meta = utils.instance_meta(instance)
+            self.assertEqual('cow', meta['moo'])
+            sys_meta = utils.instance_sys_meta(instance)
+            self.assertEqual('cat', sys_meta['meow'])
+            self.assertEqual('moo-%s' % instance['uuid'],
+                             instance['hostname'])
+            self.assertEqual('moo-%s' % instance['uuid'],
+                             instance['display_name'])
+            self.assertEqual('fake_image_ref', instance['image_ref'])
+
     def test_build_instances_selects_child_cell(self):
         # Make sure there's no capacity info so we're sure to
         # select a child cell
@@ -188,7 +238,7 @@ class CellsSchedulerTestCase(test.TestCase):
 
         def fake_create_instances_here(ctxt, instance_uuids,
                 instance_properties, instance_type, image, security_groups,
-                block_device_mapping):
+                block_device_mapping, pci_requests=None):
             call_info['ctxt'] = ctxt
             call_info['instance_uuids'] = instance_uuids
             call_info['instance_properties'] = instance_properties
@@ -196,6 +246,7 @@ class CellsSchedulerTestCase(test.TestCase):
             call_info['image'] = image
             call_info['security_groups'] = security_groups
             call_info['block_device_mapping'] = block_device_mapping
+            call_info['pci_requests'] = pci_requests
             instances = [fake_instance.fake_instance_obj(ctxt, **instance)
                     for instance in self.instances]
             return instances
@@ -349,7 +400,7 @@ class CellsSchedulerTestCase(test.TestCase):
 
         def fake_create_instances_here(ctxt, instance_uuids,
                 instance_properties, instance_type, image, security_groups,
-                block_device_mapping):
+                block_device_mapping, pci_requests=None):
             call_info['ctxt'] = ctxt
             call_info['instance_uuids'] = instance_uuids
             call_info['instance_properties'] = instance_properties
@@ -357,6 +408,7 @@ class CellsSchedulerTestCase(test.TestCase):
             call_info['image'] = image
             call_info['security_groups'] = security_groups
             call_info['block_device_mapping'] = block_device_mapping
+            call_info['pci_requests'] = pci_requests
 
         def fake_rpc_build_instances(ctxt, **host_sched_kwargs):
             call_info['host_sched_kwargs'] = host_sched_kwargs
@@ -464,7 +516,7 @@ class CellsSchedulerTestCase(test.TestCase):
 
         def fake_create_instances_here(ctxt, instance_uuids,
                 instance_properties, instance_type, image, security_groups,
-                block_device_mapping):
+                block_device_mapping, pci_requests=None):
             call_info['ctxt'] = ctxt
             call_info['instance_uuids'] = instance_uuids
             call_info['instance_properties'] = instance_properties
@@ -472,6 +524,7 @@ class CellsSchedulerTestCase(test.TestCase):
             call_info['image'] = image
             call_info['security_groups'] = security_groups
             call_info['block_device_mapping'] = block_device_mapping
+            call_info['pci_requests'] = pci_requests
 
         def fake_rpc_build_instances(ctxt, **host_sched_kwargs):
             call_info['host_sched_kwargs'] = host_sched_kwargs
