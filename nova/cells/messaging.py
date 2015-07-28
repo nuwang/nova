@@ -1098,7 +1098,7 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
         # it based on what child cells say.  Make sure to update
         # 'cell_name' based on the routing path.
         items_to_remove = ['id', 'security_groups', 'volumes', 'cell_name',
-                           'name', 'metadata']
+                           'name', 'metadata', 'numa_topology']
         for key in items_to_remove:
             instance.pop(key, None)
         instance['cell_name'] = _reverse_path(message.routing_path)
