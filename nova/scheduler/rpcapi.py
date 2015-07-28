@@ -115,9 +115,16 @@ class SchedulerAPI(object):
                                      serializer=serializer)
 
     def select_destinations(self, ctxt, request_spec, filter_properties):
-        cctxt = self.client.prepare(version='4.0')
-        return cctxt.call(ctxt, 'select_destinations',
+        version = '4.0'
+        if not self.client.can_send_version('4.0'):
+            flavor = filter_properties['instance_type']
+            flavor_p = objects_base.obj_to_primitive(flavor)
+            filter_properties['instance_type'] = flavor_p
+            version = '3.0'
+        cctxt = self.client.prepare(version=version)
+        dest = cctxt.call(ctxt, 'select_destinations',
             request_spec=request_spec, filter_properties=filter_properties)
+        return dest
 
     def update_aggregates(self, ctxt, aggregates):
         # NOTE(sbauza): Yes, it's a fanout, we need to update all schedulers
