@@ -115,31 +115,42 @@ class SchedulerAPI(object):
                                      serializer=serializer)
 
     def select_destinations(self, ctxt, request_spec, filter_properties):
-        cctxt = self.client.prepare(version='4.0')
+        version = '4.0'
+        if not self.client.can_send_version('4.0'):
+            flavor = filter_properties['instance_type']
+            flavor_p = objects_base.obj_to_primitive(flavor)
+            filter_properties['instance_type'] = flavor_p
+            version = '3.0'
+        cctxt = self.client.prepare(version=version)
         return cctxt.call(ctxt, 'select_destinations',
             request_spec=request_spec, filter_properties=filter_properties)
 
     def update_aggregates(self, ctxt, aggregates):
         # NOTE(sbauza): Yes, it's a fanout, we need to update all schedulers
-        cctxt = self.client.prepare(fanout=True, version='4.1')
-        cctxt.cast(ctxt, 'update_aggregates', aggregates=aggregates)
+        if self.client.can_send_version('4.1'):
+            cctxt = self.client.prepare(fanout=True, version='4.1')
+            cctxt.cast(ctxt, 'update_aggregates', aggregates=aggregates)
 
     def delete_aggregate(self, ctxt, aggregate):
         # NOTE(sbauza): Yes, it's a fanout, we need to update all schedulers
-        cctxt = self.client.prepare(fanout=True, version='4.1')
-        cctxt.cast(ctxt, 'delete_aggregate', aggregate=aggregate)
+        if self.client.can_send_version('4.1'):
+            cctxt = self.client.prepare(fanout=True, version='4.1')
+            cctxt.cast(ctxt, 'delete_aggregate', aggregate=aggregate)
 
     def update_instance_info(self, ctxt, host_name, instance_info):
-        cctxt = self.client.prepare(version='4.2', fanout=True)
-        return cctxt.cast(ctxt, 'update_instance_info', host_name=host_name,
-                          instance_info=instance_info)
+        if self.client.can_send_version('4.2'):
+            cctxt = self.client.prepare(version='4.2', fanout=True)
+            return cctxt.cast(ctxt, 'update_instance_info',
+                              host_name=host_name, instance_info=instance_info)
 
     def delete_instance_info(self, ctxt, host_name, instance_uuid):
-        cctxt = self.client.prepare(version='4.2', fanout=True)
-        return cctxt.cast(ctxt, 'delete_instance_info', host_name=host_name,
-                          instance_uuid=instance_uuid)
+        if self.client.can_send_version('4.2'):
+            cctxt = self.client.prepare(version='4.2', fanout=True)
+            return cctxt.cast(ctxt, 'delete_instance_info',
+                              host_name=host_name, instance_uuid=instance_uuid)
 
     def sync_instance_info(self, ctxt, host_name, instance_uuids):
-        cctxt = self.client.prepare(version='4.2', fanout=True)
-        return cctxt.cast(ctxt, 'sync_instance_info', host_name=host_name,
-                          instance_uuids=instance_uuids)
+        if self.client.can_send_version('4.2'):
+            cctxt = self.client.prepare(version='4.2', fanout=True)
+            return cctxt.cast(ctxt, 'sync_instance_info', host_name=host_name,
+                              instance_uuids=instance_uuids)
