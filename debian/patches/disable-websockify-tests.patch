@@ -15,7 +15,7 @@
  from nova import exception
  from nova import test
  from oslo_config import cfg
-@@ -27,6 +32,7 @@ CONF = cfg.CONF
+@@ -27,6 +32,7 @@
  
  class NovaProxyRequestHandlerBaseTestCase(test.NoDBTestCase):
  

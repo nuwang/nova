@@ -19,7 +19,7 @@ Closes-Bug: #1380965
 
 --- a/nova/api/openstack/compute/contrib/floating_ips.py
 +++ b/nova/api/openstack/compute/contrib/floating_ips.py
-@@ -45,7 +45,12 @@ def _translate_floating_ip_view(floating
+@@ -46,7 +46,12 @@
      except (TypeError, KeyError, AttributeError):
          result['fixed_ip'] = None
      try:

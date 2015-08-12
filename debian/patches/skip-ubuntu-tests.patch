@@ -1,6 +1,6 @@
 --- a/nova/tests/unit/compute/test_claims.py
 +++ b/nova/tests/unit/compute/test_claims.py
-@@ -177,18 +177,24 @@ class ClaimTestCase(test.NoDBTestCase):
+@@ -177,18 +177,24 @@
  
      def test_disk_insufficient(self, mock_get):
          limits = {'disk_gb': 45}
@@ -36,7 +36,7 @@
      def test_pci_pass(self, mock_get):
 --- a/nova/tests/unit/objects/test_objects.py
 +++ b/nova/tests/unit/objects/test_objects.py
-@@ -512,8 +512,11 @@ class _TestObject(object):
+@@ -514,8 +514,11 @@
          class Foo(base.NovaObject):
              fields = {'foobar': fields.Field(fields.Integer())}
          obj = Foo()
@@ -52,7 +52,7 @@
          obj = MyObj(foo=1)
 --- a/nova/tests/unit/test_wsgi.py
 +++ b/nova/tests/unit/test_wsgi.py
-@@ -323,8 +323,11 @@ class TestWSGIServerWithSSL(test.NoDBTes
+@@ -327,8 +327,11 @@
  
          server.start()
  

@@ -1,6 +1,6 @@
 --- a/nova/tests/unit/virt/libvirt/test_driver.py
 +++ b/nova/tests/unit/virt/libvirt/test_driver.py
-@@ -1032,7 +1032,7 @@ class LibvirtConnTestCase(test.NoDBTestC
+@@ -1033,7 +1033,7 @@
          self.assertEqual(1, cfg.vcpus)
          self.assertEqual(vm_mode.EXE, cfg.os_type)
          self.assertEqual("/sbin/init", cfg.os_init_path)
@@ -9,7 +9,7 @@
          self.assertIsNone(cfg.os_root)
          self.assertEqual(3, len(cfg.devices))
          self.assertIsInstance(cfg.devices[0],
-@@ -1058,7 +1058,7 @@ class LibvirtConnTestCase(test.NoDBTestC
+@@ -1057,7 +1057,7 @@
          self.assertEqual(1, cfg.vcpus)
          self.assertEqual(vm_mode.EXE, cfg.os_type)
          self.assertEqual("/sbin/init", cfg.os_init_path)
@@ -20,7 +20,7 @@
          self.assertIsInstance(cfg.devices[0],
 --- a/nova/virt/libvirt/driver.py
 +++ b/nova/virt/libvirt/driver.py
-@@ -290,7 +290,7 @@ DISABLE_PREFIX = 'AUTO: '
+@@ -263,7 +263,7 @@
  DISABLE_REASON_UNDEFINED = None
  
  # Guest config console string
