@@ -328,6 +328,7 @@ class CellsSchedulerTestCase(test.TestCase):
         method_kwargs = {
                 'image': 'fake_image',
                 'instances': instances,
+                'block_device_mapping': [{'fake-bdm'}],
                 'filter_properties': {'instance_type': {}}}
 
         call_info = {'num_tries': 0,
