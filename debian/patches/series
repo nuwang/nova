@@ -6,5 +6,4 @@ neutron-floating-ip-list.patch
 skip-cinder-tests.patch
 #rate-limit-power-syncs.patch
 skip-ubuntu-tests.patch
-fixup-blkid.patch
 skip-proxy-test.patch
