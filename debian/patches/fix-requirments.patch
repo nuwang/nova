@@ -1,0 +1,23 @@
+diff --git a/requirements.txt b/requirements.txt
+index de0323e..6928877 100644
+--- a/requirements.txt
++++ b/requirements.txt
+@@ -2,15 +2,15 @@
+ # of appearance. Changing the order has an impact on the overall integration
+ # process, which may cause wedges in the gate later.
+ 
+-pbr!=0.7,<1.0,>=0.6
++pbr<1.0,>=0.6
+ SQLAlchemy<=0.9.99,>=0.9.7
+ boto>=2.32.1
+ decorator>=3.4.0
+-eventlet!=0.17.0,>=0.16.1
++eventlet==0.16.1
+ Jinja2>=2.6 # BSD License (3 clause)
+ keystonemiddleware<1.6.0,>=1.5.0
+ lxml>=2.3
+-Routes!=2.0,>=1.12.3
++Routes>=1.12.3
+ WebOb>=1.2.3
+ greenlet>=0.3.2
+ PasteDeploy>=1.5.0
