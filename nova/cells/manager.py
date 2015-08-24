@@ -448,7 +448,8 @@ class CellsManager(manager.Manager):
 
     def authorize_console(self, ctxt, cell_name,
                           token, console_type, host, port,
-                          internal_access_path, instance_uuid):
+                          internal_access_path, instance_uuid,
+                          access_url=None):
 
         self.msg_runner.authorize_console(ctxt, cell_name,
                                           token, console_type, host, port,

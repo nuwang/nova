@@ -849,7 +849,7 @@ class _TargetedMessageMethods(_BaseMessageMethods):
 
     def authorize_console(self, message, token, console_type,
                           host, port, internal_access_path,
-                          instance_uuid):
+                          instance_uuid, access_url=None):
         self.consoleauth_rpcapi.authorize_console(message.ctxt,
                             token, console_type, host,
                             port, internal_access_path, instance_uuid)
@@ -1950,7 +1950,8 @@ class MessageRunner(object):
 
     def authorize_console(self, ctxt, cell_name,
                           token, console_type, host, port,
-                          internal_access_path, instance_uuid):
+                          internal_access_path, instance_uuid,
+                          access_url=None):
         method_kwargs = {'token': token,
                          'console_type': console_type,
                          'host': host,
