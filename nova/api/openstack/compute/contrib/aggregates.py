@@ -99,9 +99,11 @@ class AggregateController(object):
 
         # To maintain the same API result as before the changes for returning
         # nova objects were made.
-        del agg['aggregate']['hosts']
-        del agg['aggregate']['metadata']
-
+        try:
+            del agg['aggregate']['hosts']
+            del agg['aggregate']['metadata']
+        except KeyError:
+            pass
         return agg
 
     def show(self, req, id):
