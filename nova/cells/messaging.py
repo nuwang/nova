@@ -823,10 +823,10 @@ class _TargetedMessageMethods(_BaseMessageMethods):
 
     def authorize_console(self, message, token, console_type,
                           host, port, internal_access_path,
-                          instance_uuid):
+                          instance_uuid, access_url):
         self.consoleauth_rpcapi.authorize_console(message.ctxt,
-                            token, console_type, host,
-                            port, internal_access_path, instance_uuid)
+                            token, console_type, host, port,
+                            internal_access_path, instance_uuid, access_url)
 
     def get_migrations(self, message, filters):
         return self.compute_api.get_migrations(message.ctxt, filters)
@@ -1922,13 +1922,15 @@ class MessageRunner(object):
 
     def authorize_console(self, ctxt, cell_name,
                           token, console_type, host, port,
-                          internal_access_path, instance_uuid):
+                          internal_access_path, instance_uuid,
+                          access_url):
         method_kwargs = {'token': token,
                          'console_type': console_type,
                          'host': host,
                          'port': port,
                          'internal_access_path': internal_access_path,
-                         'instance_uuid': instance_uuid}
+                         'instance_uuid': instance_uuid,
+                         'access_url': access_url}
         message = _TargetedMessage(self, ctxt, 'authorize_console',
                                    method_kwargs, 'down',
                                    cell_name, need_response=True)
