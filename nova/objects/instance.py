@@ -36,6 +36,13 @@ from nova import utils
 CONF = cfg.CONF
 LOG = logging.getLogger(__name__)
 
+compute_opts = [
+    cfg.BoolOpt('disable_flavor_migrate',
+                default=False,
+                help='Whether to disable flavor migrations or not),')
+]
+
+CONF.register_opts(compute_opts)
 
 # List of fields that can be joined in DB layer.
 _INSTANCE_OPTIONAL_JOINED_FIELDS = ['metadata', 'system_metadata',
@@ -376,7 +383,8 @@ class Instance(base.NovaPersistentObject, base.NovaObject,
         ctxt = context.get_admin_context(read_deleted='yes')
 
         instance.flavor = flavors.extract_flavor(instance)
-        flavors.delete_flavor_info(instance.system_metadata, '')
+        if not CONF.disable_flavor_migrate:
+            flavors.delete_flavor_info(instance.system_metadata, '')
 
         for ftype in ('old', 'new'):
             attrname = '%s_flavor' % ftype
@@ -385,7 +393,9 @@ class Instance(base.NovaPersistentObject, base.NovaObject,
             try:
                 flavor = flavors.extract_flavor(instance, prefix)
                 setattr(instance, attrname, flavor)
-                flavors.delete_flavor_info(instance.system_metadata, prefix)
+                if not CONF.disable_flavor_migrate:
+                    flavors.delete_flavor_info(instance.system_metadata,
+                                               prefix)
             except KeyError:
                 setattr(instance, attrname, None)
 
@@ -751,7 +761,8 @@ class Instance(base.NovaPersistentObject, base.NovaObject,
             attr = '%sflavor' % ftype
             try:
                 flavor = flavors.extract_flavor(self, prefix=ftype)
-                flavors.delete_flavor_info(self.system_metadata, ftype)
+                if not CONF.disable_flavor_migrate:
+                    flavors.delete_flavor_info(self.system_metadata, ftype)
                 # NOTE(danms): This may trigger a lazy-load of the flavor
                 # information, but only once and it avoids re-fetching and
                 # re-migrating the original flavor.
