@@ -1,8 +1,6 @@
-diff --git a/requirements.txt b/requirements.txt
-index de0323e..6928877 100644
 --- a/requirements.txt
 +++ b/requirements.txt
-@@ -2,15 +2,15 @@
+@@ -2,20 +2,20 @@
  # of appearance. Changing the order has an impact on the overall integration
  # process, which may cause wedges in the gate later.
  
@@ -21,3 +19,9 @@ index de0323e..6928877 100644
  WebOb>=1.2.3
  greenlet>=0.3.2
  PasteDeploy>=1.5.0
+ Paste
+-sqlalchemy-migrate!=0.9.8,<0.10.0,>=0.9.5
++sqlalchemy-migrate<0.10.0,>=0.9.5
+ netaddr>=0.7.12
+ paramiko>=1.13.0
+ pyasn1

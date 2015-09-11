@@ -1,8 +1,6 @@
-diff --git a/MANIFEST.in b/MANIFEST.in
-index c978a52..3c7bd7c 100644
 --- a/MANIFEST.in
 +++ b/MANIFEST.in
-@@ -4,3 +4,38 @@ exclude .gitignore
+@@ -4,3 +4,38 @@
  exclude .gitreview
  
  global-exclude *.pyc
