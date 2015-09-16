@@ -1418,7 +1418,7 @@ class _BroadcastMessageMethods(_BaseMessageMethods):
         self._security_group_rule_create_or_destroy(message, rule, create=True)
 
     def security_group_rule_destroy(self, message, rule):
-        LOG.debug("Received message to delete rule %s") % rule
+        LOG.debug("Received message to delete rule %s" % rule)
         self._security_group_rule_create_or_destroy(
             message, rule, create=False)
 
