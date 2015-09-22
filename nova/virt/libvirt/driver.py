@@ -2513,7 +2513,12 @@ class LibvirtDriver(driver.ComputeDriver):
             # question is not actually listening for connections.
             raise exception.ConsoleTypeUnavailable(console_type='vnc')
 
-        port = get_vnc_port_for_instance(instance.name)
+        if type(instance) == dict:
+            instance_name = instance['name']
+        else:
+            instance_name = instance.name
+
+        port = get_vnc_port_for_instance(instance_name)
         host = CONF.vncserver_proxyclient_address
 
         return ctype.ConsoleVNC(host=host, port=port)

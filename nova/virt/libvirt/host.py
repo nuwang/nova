@@ -590,7 +590,12 @@ class Host(object):
 
         :returns: a libvirt.Domain object
         """
-        return self._get_domain_by_name(instance.name)
+        if type(instance) == dict:
+            instance_name = instance['name']
+        else:
+            instance_name = instance.name
+
+        return self._get_domain_by_name(instance_name)
 
     def _get_domain_by_id(self, instance_id):
         """Retrieve libvirt domain object given an instance id.

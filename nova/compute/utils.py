@@ -84,7 +84,11 @@ def add_instance_fault_from_exc(context, instance, fault, exc_info=None):
 
     fault_obj = objects.InstanceFault(context=context)
     fault_obj.host = CONF.host
-    fault_obj.instance_uuid = instance.uuid
+    if type(instance) == dict:
+        fault_obj.instance_uuid = instance['uuid']
+    else:
+        fault_obj.instance_uuid = instance.uuid
+
     fault_obj.update(exception_to_dict(fault))
     code = fault_obj.code
     fault_obj.details = _get_fault_details(exc_info, code)
