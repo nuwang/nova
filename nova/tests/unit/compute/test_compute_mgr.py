@@ -2407,7 +2407,8 @@ class ComputeManagerUnitTestCase(test.NoDBTestCase):
         # is shutdown and the task_state is None.
         instance = fake_instance.fake_instance_obj(
             self.context, vm_state=vm_states.ACTIVE,
-            task_state=None, power_state=power_state.SHUTDOWN)
+            task_state=None, power_state=power_state.SHUTDOWN,
+            expected_attrs=['system_metadata'])
 
         @mock.patch.object(self.compute, '_get_power_state',
                            return_value=power_state.SHUTDOWN)
