@@ -1259,7 +1259,12 @@ class API(base_api.NetworkAPI):
     def get_floating_ips_by_project(self, context):
         client = get_client(context)
         project_id = context.project_id
-        fips = client.list_floatingips(tenant_id=project_id)['floatingips']
+        try:
+            fips = client.list_floatingips(tenant_id=project_id)['floatingips']
+        except neutron_client_exc.NeutronClientException as e:
+            if e.status_code == 404:
+                return []
+            raise e
         pool_dict = self._setup_pools_dict(client)
         port_dict = self._setup_ports_dict(client, project_id)
         return [self._format_floating_ip_model(fip, pool_dict, port_dict)
