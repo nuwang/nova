@@ -2190,6 +2190,13 @@ class API(base.Base):
                                  when creating the image.
         :returns: A dict containing image metadata
         """
+        suspend_disabled = int(instance.system_metadata.get(
+            NECTAR_SUSPEND_LOCK, 0))
+
+        if suspend_disabled == 1:
+            raise exception.InstanceSuspendDisabled(
+                instance_uuid=instance.uuid)
+
         image_meta = self._create_image(context, instance, name,
                                         'snapshot',
                                         extra_properties=extra_properties)
