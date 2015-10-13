@@ -7,5 +7,5 @@ skip-cinder-tests.patch
 #rate-limit-power-syncs.patch
 skip-ubuntu-tests.patch
 skip-proxy-test.patch
-fix-requirments.patch
+fix-requirements.patch
 fix-manifest.patch
