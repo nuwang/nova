@@ -951,10 +951,8 @@ class Instance(base.NovaPersistentObject, base.NovaObject,
             # have an instance in the database that doesn't have either
             # newer setup, mirror the original behavior here if the instance
             # is deleted
-            # NOTE(sorrison) Commented out as breaks juno, reenable once
-            # all at kilo
-            #if not self.deleted:
-            #    raise
+            if not self.deleted:
+                raise
             self.flavor = objects.Flavor.get_by_id(self._context,
                                                    self.instance_type_id)
             self.old_flavor = None
