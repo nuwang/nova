@@ -2244,6 +2244,10 @@ def _get_regexp_op_for_connection(db_connection):
 
 
 def _regex_instance_filter(query, filters):
+    return _regex_filter(query, models.Instance, filters)
+
+
+def _regex_filter(query, model, filters):
     """Applies regular expression filtering to an Instance query.
 
     Returns the updated query.
@@ -2252,7 +2256,6 @@ def _regex_instance_filter(query, filters):
     :param filters: dictionary of filters with regex values
     """
 
-    model = models.Instance
     db_regexp_op = _get_regexp_op_for_connection(CONF.database.connection)
     for filter_name in filters.iterkeys():
         try:
@@ -2271,6 +2274,10 @@ def _regex_instance_filter(query, filters):
 
 
 def _exact_instance_filter(query, filters, legal_keys):
+    return _exact_filter(query, models.Instance, filters, legal_keys)
+
+
+def _exact_filter(query, model, filters, legal_keys):
     """Applies exact match filtering to an Instance query.
 
     Returns the updated query.  Modifies filters argument to remove
@@ -2285,7 +2292,6 @@ def _exact_instance_filter(query, filters, legal_keys):
     """
 
     filter_dict = {}
-    model = models.Instance
 
     # Walk through all the keys
     for key in legal_keys:
