@@ -131,12 +131,8 @@ class ResourceTracker(object):
         claim = claims.Claim(context, instance_ref, self, self.compute_node,
                              overhead=overhead, limits=limits)
 
-        # self._set_instance_host_and_node() will save instance_ref to the DB
-        # so set instance_ref['numa_topology'] first.  We need to make sure
-        # that numa_topology is saved while under COMPUTE_RESOURCE_SEMAPHORE
-        # so that the resource audit knows about any cpus we've pinned.
-        instance_ref['numa_topology'] = claim.claimed_numa_topology
         self._set_instance_host_and_node(context, instance_ref)
+        instance_ref['numa_topology'] = claim.claimed_numa_topology
 
         # Mark resources in-use and update stats
         self._update_usage_from_instance(context, self.compute_node,
@@ -214,15 +210,18 @@ class ResourceTracker(object):
         migration.create()
         return migration
 
-    def _set_instance_host_and_node(self, context, instance):
+    def _set_instance_host_and_node(self, context, instance_ref):
         """Tag the instance as belonging to this host.  This should be done
         while the COMPUTE_RESOURCES_SEMAPHORE is held so the resource claim
         will not be lost if the audit process starts.
         """
-        instance.host = self.host
-        instance.launched_on = self.host
-        instance.node = self.nodename
-        instance.save()
+        values = {'host': self.host, 'node': self.nodename,
+                  'launched_on': self.host}
+        self.conductor_api.instance_update(context, instance_ref['uuid'],
+                                           **values)
+        instance_ref['host'] = self.host
+        instance_ref['launched_on'] = self.host
+        instance_ref['node'] = self.nodename
 
     @utils.synchronized(COMPUTE_RESOURCE_SEMAPHORE)
     def abort_instance_claim(self, context, instance):
